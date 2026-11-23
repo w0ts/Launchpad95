@@ -10,7 +10,6 @@ import importlib.util
 import os
 import sys
 import threading
-import time
 
 import pytest
 
@@ -68,22 +67,19 @@ def framework():
     return _load_package()
 
 
-def _server_threads():
-    return [
-        t
-        for t in threading.enumerate()
-        if t.is_alive()
-        and type(getattr(getattr(t, "_target", None), "__self__", None)).__name__ == "DeviceControllerStripServer"
-    ]
+@pytest.fixture
+def no_thread_starts(monkeypatch):
+    """Fails the test if the script starts a thread: everything runs on Live's main thread."""
+    started = []
+    original_start = threading.Thread.start
 
+    def recording_start(thread):
+        started.append(thread)
+        return original_start(thread)
 
-def _stop_server_threads():
-    threads = _server_threads()
-    for thread in threads:
-        thread._target.__self__._request_queue.put(("shutdown", 0, (), {}))
-    for thread in threads:
-        thread.join(timeout=5)
-    return threads
+    monkeypatch.setattr(threading.Thread, "start", recording_start)
+    yield
+    assert not started, f"threads started: {started}"
 
 
 @pytest.fixture
@@ -98,7 +94,7 @@ def clock(framework, monkeypatch):
 
 
 @pytest.fixture
-def make_rig(framework, clock):
+def make_rig(framework, clock, no_thread_starts):
     """make_rig(DeviceClass, song=None, boot=True) -> a Rig; disconnected after the test."""
     import Live
     from harness.rig import Rig
@@ -121,18 +117,7 @@ def make_rig(framework, clock):
         except Exception as error:  # keep disconnecting the others, then report
             errors.append(error)
     if errors:
-        _stop_server_threads()
         raise errors[0]
-    deadline = time.time() + 5
-    while _server_threads() and time.time() < deadline:
-        time.sleep(0.01)
-    leftover = _stop_server_threads()
-    assert not leftover, f"device controller threads still running after disconnect(): {len(leftover)}"
-
-
-def pytest_sessionfinish(session, exitstatus):
-    # Safety net: never let a non-daemon server thread keep the test process alive.
-    _stop_server_threads()
 
 
 def pytest_generate_tests(metafunc):

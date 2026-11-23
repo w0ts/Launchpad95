@@ -1,88 +1,102 @@
-"""DeviceControllerStripServer and its proxy, driven directly (no strip thread unless a test
-starts one)."""
-
-import queue
-import threading
-import time
+"""DeviceControllerStrip and ParameterSlides, driven directly."""
 
 import Live
 import pytest
 from harness.devices import LaunchpadX
 
 
+class _Parent:
+    _osd = None
+
+
 @pytest.fixture
-def server(make_rig):
-    from Launchpad95.DeviceControllerStripServer import DeviceControllerStripServer
+def strip(make_rig):
+    from Launchpad95.DeviceControllerStrip import DeviceControllerStrip
+    from Launchpad95.ParameterSlides import ParameterSlides
 
     rig = make_rig(LaunchpadX)
     buttons = [rig.selector._matrix.get_button(0, y) for y in range(8)]
     with rig.surface.component_guard():  # controls are made inside the surface's context
-        return DeviceControllerStripServer(
-            buttons, rig.surface, 0, request_queue=queue.Queue(), response_queue=queue.Queue()
-        )
+        return DeviceControllerStrip(buttons, 0, _Parent(), ParameterSlides())
 
 
-def test_nine_value_enum_is_a_big_enum(server):
-    from Launchpad95.DeviceControllerStripServer import SLIDER_MODE_BIG_ENUM, SLIDER_MODE_SMALL_ENUM
+def test_nine_value_enum_is_a_big_enum(strip):
+    from Launchpad95.DeviceControllerStrip import SLIDER_MODE_BIG_ENUM, SLIDER_MODE_SMALL_ENUM
 
-    server._parameter_to_map_to = Live.DeviceParameter.DeviceParameter(min=0, max=7, is_quantized=True)
-    assert server._mode == SLIDER_MODE_SMALL_ENUM  # 8 values, 8 buttons
-    server._parameter_to_map_to = Live.DeviceParameter.DeviceParameter(min=0, max=8, is_quantized=True)
-    assert server._mode == SLIDER_MODE_BIG_ENUM  # 9 values do not fit on 8 buttons
+    strip._parameter_to_map_to = Live.DeviceParameter.DeviceParameter(min=0, max=7, is_quantized=True)
+    assert strip._mode == SLIDER_MODE_SMALL_ENUM  # 8 values, 8 buttons
+    strip._parameter_to_map_to = Live.DeviceParameter.DeviceParameter(min=0, max=8, is_quantized=True)
+    assert strip._mode == SLIDER_MODE_BIG_ENUM  # 9 values do not fit on 8 buttons
 
 
-def test_slider_update_is_needed_only_when_the_lit_button_changes(server):
+def test_slider_update_is_needed_only_when_the_lit_button_changes(strip):
     parameter = Live.DeviceParameter.DeviceParameter(min=0.0, max=100.0, value=50.0)
-    server._parameter_to_map_to = parameter
-    server._update_slider()
-    assert not server._is_update_needed()
+    strip._parameter_to_map_to = parameter
+    strip.update()
+    assert not strip._is_update_needed()
     parameter.value = 100.0
-    assert server._is_update_needed()
+    assert strip._is_update_needed()
 
 
-def test_run_loop_error_is_reported_to_the_proxy(server, monkeypatch):
-    monkeypatch.setattr(threading, "excepthook", lambda args: None)  # the loop re-raises
-    server._request_queue.put(("set_precision_mode", 1, ("one", "too many"), {}))
-    thread = threading.Thread(target=server.run)
-    thread.start()
-    thread.join(timeout=5)
-    assert server._response_queue.get(timeout=1) == (0, "ERROR")
+def test_strip_without_parameter_paints_its_pads_disabled(strip):
+    strip.reset_if_no_parameter()
+    assert all(button.states[True] == "DefaultButton.Disabled" for button in strip._buttons)
+    assert strip.param_name() == "None"
+    assert strip.param_value() == 0
 
 
-class _Proxy:
-    """A DeviceControllerStripProxy without its server thread."""
-
-    @staticmethod
-    def make():
-        from Launchpad95.DeviceControllerStripProxy import DeviceControllerStripProxy
-
-        proxy = object.__new__(DeviceControllerStripProxy)
-        proxy._request_queue = queue.Queue()
-        proxy._response_queue = queue.Queue()
-        proxy.failed = False
-        proxy.column = 0
-        proxy.request_id = 0
-        return proxy
+def test_disabled_strip_ignores_pads_and_updates(strip):
+    parameter = Live.DeviceParameter.DeviceParameter(min=0, max=3, is_quantized=True)
+    strip._parameter_to_map_to = parameter
+    strip.set_enabled(False)
+    strip._button_value(127, strip._buttons[2])
+    strip._button_value(0, strip._buttons[2])
+    assert parameter.value == 0
 
 
-def test_proxy_stops_waiting_when_the_server_reports_an_error(framework):
-    proxy = _Proxy.make()
-    proxy._response_queue.put((0, "ERROR"))
-    start = time.time()
-    assert proxy.param_name() is None
-    assert time.time() - start < 1.0
-    assert proxy.failed
+def test_slide_is_dropped_when_something_else_moves_the_parameter(framework):
+    from Launchpad95.ParameterSlides import ParameterSlides
+
+    parameter = Live.DeviceParameter.DeviceParameter(min=0.0, max=1.0, value=0.0)
+    slides = ParameterSlides()
+    slides.start(parameter, 1.0, 1.0)  # 1 unit per second: first step is 50 ms
+    assert parameter.value == pytest.approx(0.05)
+    parameter.value = 0.5  # the mouse in Live
+    slides.advance(0.1)
+    assert parameter.value == 0.5
+    assert not slides.is_sliding()
 
 
-def test_failed_proxy_raises_instead_of_returning_none(framework):
-    proxy = _Proxy.make()
-    proxy.failed = True
-    with pytest.raises(AttributeError):
-        proxy.update()
+class _DeletableParameter(Live.DeviceParameter.DeviceParameter):
+    """Once deleted, compares equal to None like a Live object whose C++ object is gone."""
+
+    deleted = False
+
+    def __eq__(self, other):
+        return (other is None and self.deleted) or other is self
+
+    __hash__ = object.__hash__
 
 
-def test_failed_proxy_can_still_be_shut_down(framework):
-    proxy = _Proxy.make()
-    proxy.failed = True
-    proxy.shutdown()
-    assert proxy._request_queue.get_nowait()[0] == "shutdown"
+def test_slide_ends_when_its_parameter_is_deleted(framework):
+    from Launchpad95.ParameterSlides import ParameterSlides
+
+    parameter = _DeletableParameter(min=0.0, max=1.0, value=0.0)
+    slides = ParameterSlides()
+    slides.start(parameter, 1.0, 1.0)
+    assert slides.is_sliding()
+    parameter.deleted = True
+    slides.advance(0.1)
+    assert not slides.is_sliding()
+    assert parameter.value == pytest.approx(0.05)
+
+
+def test_slide_without_rate_jumps(framework):
+    from Launchpad95.ParameterSlides import ParameterSlides
+
+    parameter = Live.DeviceParameter.DeviceParameter(min=0.0, max=1.0, value=0.0)
+    slides = ParameterSlides()
+    slides.start(parameter, 0.75, None)
+    assert parameter.value == 0.75
+    assert not slides.is_sliding()
+    assert slides.target(parameter) is None

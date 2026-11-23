@@ -73,7 +73,7 @@ def dynamic_keys(package):
     keys += [f"StepSequencer.NoteEditor.Velocity{index}" for index in range(5)]
     # TrackControllerComponent: set_on_off_values("Mode." + skin_name), default skin name "Session".
     keys += ["Mode.Session.On", "Mode.Session.Off"]
-    # DeviceControllerStripServer custom colours and press-time steps.
+    # DeviceControllerStrip custom colours and press-time steps.
     for column in range(8):
         keys += [f"Device.CustomSlider{column}.{part}" for part in ("On", "Off", "Third", "Half")]
     keys += [f"Device.ColorSteps.Step{step}" for step in range(10)]

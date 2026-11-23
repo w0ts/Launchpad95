@@ -1,7 +1,5 @@
-"""Device controller mode (user 1 button, second sub mode). Its 8 column sliders run in
-threads (DeviceControllerStripServer); the rig fixture checks they all stop on disconnect."""
-
-import time
+"""Device controller mode (user 1 button, second sub mode): device selection and
+navigation. The columns themselves are in test_device_sliders.py and test_device_slides.py."""
 
 import Live
 import pytest
@@ -16,16 +14,6 @@ def song_with_device():
     device.canonical_parent = song.tracks[0]
     song.tracks[0].devices = (device,)
     return song, device
-
-
-def wait_for(condition, timeout=5.0):
-    """The sliders apply values from their own threads: poll in real time."""
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if condition():
-            return True
-        time.sleep(0.01)
-    return condition()
 
 
 @pytest.fixture
@@ -52,13 +40,13 @@ def test_top_pad_of_a_column_raises_its_parameter(device_rig):
     rig = device_rig
     parameter = rig.device_under_test.parameters[1]
     assert parameter.value == 0.0
-    # A short tap (Settings.ENABLE_TDC): the target is set on release and reached by the
-    # strip thread at its fastest speed.
+    # A short tap (Settings.ENABLE_TDC): the target is set on release and reached at the
+    # fastest speed, at once.
     rig.press(0, 0)
     rig.release(0, 0)
-    assert wait_for(lambda: parameter.value == parameter.max), parameter.value
+    assert parameter.value == parameter.max
     rig.tap(0, 7)
-    assert wait_for(lambda: parameter.value == parameter.min), parameter.value
+    assert parameter.value == parameter.min
 
 
 def test_device_mode_without_device_boots_and_leaves(make_rig, model):
@@ -70,16 +58,6 @@ def test_device_mode_without_device_boots_and_leaves(make_rig, model):
     rig.tap_top(4)
     rig.tick(2)
     assert rig.selector._main_mode_index == 0
-
-
-def test_device_controller_threads_stop_on_disconnect(device_rig):
-    rig = device_rig
-    server_threads = [s._server_process for s in rig.selector._device_controller._sliders]
-    assert all(t.is_alive() for t in server_threads)
-    rig.disconnect()
-    for thread in server_threads:
-        thread.join(timeout=5)
-    assert not any(t.is_alive() for t in server_threads)
 
 
 def rack_song(first_chain_devices=(), last_chain_devices=()):
@@ -143,14 +121,3 @@ def test_entering_device_mode_shows_the_device_chain(make_rig):
     rig.tap_top(USER1)
     rig.tick(2)
     assert view.is_view_visible("Detail/DeviceChain")
-
-
-def test_disconnect_with_a_failed_strip_still_stops_every_thread(device_rig):
-    rig = device_rig
-    sliders = rig.selector._device_controller._sliders
-    sliders[0].failed = True  # its server stopped answering
-    threads = [s._server_process for s in sliders]
-    rig.disconnect()
-    for thread in threads:
-        thread.join(timeout=5)
-    assert not any(t.is_alive() for t in threads)

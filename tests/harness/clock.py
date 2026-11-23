@@ -10,10 +10,10 @@ import time as _real_time
 TICK_SECONDS = 0.1
 START = 1000.0
 
-# Script modules that call time.time(). The device controller strip server threads keep
-# the real clock (they pace themselves with time.sleep).
+# Script modules that call time.time().
 TIMED_MODULES = (
     "DeviceControllerComponent",
+    "DeviceControllerStrip",
     "LoopSelectorComponent",
     "MainSelectorComponent",
     "NoteEditorComponent",

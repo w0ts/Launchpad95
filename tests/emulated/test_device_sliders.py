@@ -7,51 +7,25 @@ These are main-thread paths (button presses, parameter listeners): no slide is i
 except where a test says so.
 """
 
-import time
-
-import Live
 import pytest
-from harness.rig import make_song
-
-USER1 = 5
-MODE_TOGGLE = 3
-LOCK1 = 4
-DISABLED = "DefaultButton.Disabled"
-
-TOGGLE, ENUM4, ENUM8, ENUM9, ENUM128, SLIDER, WIDE, SPARE = range(8)
-
-
-def device_with_kinds(name="Kinds"):
-    """One parameter kind per column (bank 0 maps parameters 1-8)."""
-    param = Live.DeviceParameter.DeviceParameter
-    parameters = [
-        param("Device On", 1.0, 0.0, 1.0, is_quantized=True),
-        param("Toggle", 0, 0, 1, is_quantized=True),
-        param("Enum4", 0, 0, 3, is_quantized=True),
-        param("Enum8", 0, 0, 7, is_quantized=True),
-        param("Enum9", 0, 0, 8, is_quantized=True),
-        param("Enum128", 64, 0, 127, is_quantized=True),
-        param("Slider", 0.0, 0.0, 1.0),
-        param("Wide", 0.0, 0.0, 100.0),
-        param("Spare", 0.0, 0.0, 1.0),
-    ]
-    return Live.Device.Device(name=name, class_name="FakeKinds", parameters=parameters)
-
-
-def song_with_devices(*devices_per_track):
-    song = make_song()
-    for track, devices in zip(song.tracks[: len(devices_per_track)], devices_per_track, strict=True):
-        for device in devices:
-            device.canonical_parent = track
-        track.devices = tuple(devices)
-    return song
-
-
-def enter_device_mode(rig):
-    rig.tap_top(USER1)
-    rig.tap_top(USER1)
-    rig.tick(2)
-    assert rig.selector._mode_index == 5
+from harness.device_mode import (
+    DISABLED,
+    ENUM4,
+    ENUM8,
+    ENUM9,
+    ENUM128,
+    LOCK1,
+    MODE_TOGGLE,
+    SLIDER,
+    TOGGLE,
+    WIDE,
+    device_with_kinds,
+    enter_device_mode,
+    names,
+    param,
+    song_with_devices,
+    tap_pad,
+)
 
 
 @pytest.fixture
@@ -63,34 +37,8 @@ def kinds_rig(make_rig, model):
     return rig
 
 
-def param(rig, column):
-    return rig.device_under_test.parameters[column + 1]
-
-
-def pad(column, index):
-    """(x, y) of a column's pad, index 0 at the bottom."""
-    return column, 7 - index
-
-
-def tap_pad(rig, column, index):
-    rig.tap(*pad(column, index))
-
-
-def names(rig, column):
-    matrix = rig.selector._matrix
-    return [matrix.get_button(*pad(column, index)).states[True] for index in range(8)]
-
-
-def wait_for(condition, timeout=5.0):
-    """The mode toggle reaches the strips asynchronously (strip threads): poll."""
-    deadline = time.time() + timeout
-    while not condition() and time.time() < deadline:
-        time.sleep(0.01)
-    return condition()
-
-
 def strips(rig):
-    return [proxy.server for proxy in rig.selector._device_controller._sliders]
+    return rig.selector._device_controller._sliders
 
 
 def osd(rig):
@@ -176,7 +124,7 @@ def test_short_tap_on_mode_toggle_switches_precision(kinds_rig):
     rig.tap_side(MODE_TOGGLE)
     assert controller._precision_mode
     precision = [DISABLED] * 3 + ["Device.PrecisionSlider.Off", "Device.PrecisionSlider.On"] + [DISABLED] * 3
-    assert wait_for(lambda: names(rig, WIDE) == precision), names(rig, WIDE)
+    assert names(rig, WIDE) == precision
     tap_pad(rig, WIDE, 4)  # range 100: 100/128 rounds up to 1
     assert param(rig, WIDE).value == 1
     tap_pad(rig, WIDE, 7)  # 1 * 2**3
@@ -198,7 +146,7 @@ def test_long_press_on_mode_toggle_switches_stepless_off(kinds_rig):
     rig.release_side(MODE_TOGGLE)
     assert not controller._stepless_mode
     assert "normal faders mode" in rig.messages
-    assert wait_for(lambda: not any(s._stepless_mode for s in strips(rig)))
+    assert not any(strip._stepless_mode for strip in strips(rig))
     tap_pad(rig, SLIDER, 7)  # not stepless: jumps at once
     assert param(rig, SLIDER).value == 1.0
     tap_pad(rig, SLIDER, 0)

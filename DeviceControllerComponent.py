@@ -1,11 +1,16 @@
 import time
 
 import Live
+from _Framework import Task
 from _Framework.ButtonElement import ButtonElement
 from _Framework.DeviceComponent import DeviceComponent
 
-from .DeviceControllerStripProxy import DeviceControllerStripProxy
+from .DeviceControllerStrip import DeviceControllerStrip
+from .ParameterSlides import ParameterSlides
 from .Settings import Settings
+
+# Longest time one tick may advance the slides by (Live can stall, e.g. while loading).
+MAX_TICK_SECONDS = 0.5
 
 
 class DeviceControllerComponent(DeviceComponent):
@@ -23,6 +28,8 @@ class DeviceControllerComponent(DeviceComponent):
     ):
         self._control_surface = control_surface
         self.name = name
+        self._slides = ParameterSlides()
+        self._last_tick = None
         self._device = None
         self._matrix = matrix
         self._selected_track = None
@@ -63,6 +70,9 @@ class DeviceControllerComponent(DeviceComponent):
 
         # self._remaining_buttons = None UNUSED
         DeviceComponent.__init__(self)
+        # Runs from Live's update_display while device mode is on: the component's task
+        # group is paused while it is disabled and killed on disconnect.
+        self._tasks.add(Task.FuncTask(self._on_tick))
 
         # Sliders
         self._sliders = []
@@ -116,10 +126,9 @@ class DeviceControllerComponent(DeviceComponent):
         # self._remaining_buttons = None UNUSED
         self._device = None
         for slider in self._sliders:
-            if not slider.failed:
-                slider.release_parameter()
-            slider.shutdown()  # queued after the release; also stops a failed strip
-        # the strips are released and stopped: the framework must not call them again
+            slider.release_parameter()
+        self._slides.clear()
+        # the strips are released: the framework must not call them again
         self._parameter_controls = None
         DeviceComponent.disconnect(self)
 
@@ -128,20 +137,11 @@ class DeviceControllerComponent(DeviceComponent):
         if self._matrix:
             self._sliders = []
             for column in range(self._matrix.width()):
-                slider = DeviceControllerStripProxy(
-                    tuple(
-                        [
-                            self._matrix.get_button(column, (self._matrix.height() - 1 - row))
-                            for row in range(self._matrix.height())
-                        ]
-                    ),
-                    self,
-                    column,
-                    self,
+                buttons = tuple(
+                    self._matrix.get_button(column, (self._matrix.height() - 1 - row))
+                    for row in range(self._matrix.height())
                 )
-                slider._parent = self
-                # slider.set_parent(self)
-                self._sliders.append(slider)
+                self._sliders.append(DeviceControllerStrip(buttons, column, self, self._slides))
             self._sliders = tuple(self._sliders)
             self.set_parameter_controls(self._sliders)
         else:
@@ -157,6 +157,10 @@ class DeviceControllerComponent(DeviceComponent):
             self.on_selected_track_changed()
             if self._device is not None:
                 self.set_device_view()
+        else:
+            # leaving device mode ends the running slides
+            self._slides.clear()
+            self._last_tick = None
         # disable matrix.
         for slider in self._sliders:
             slider.set_enabled(active)
@@ -164,6 +168,15 @@ class DeviceControllerComponent(DeviceComponent):
         # ping parent
         DeviceComponent.set_enabled(self, active)
         return True
+
+    def _on_tick(self, delta):
+        now = time.time()
+        elapsed = delta if self._last_tick is None else min(max(now - self._last_tick, 0.0), MAX_TICK_SECONDS)
+        self._last_tick = now
+        self._slides.advance(elapsed)
+        for slider in self._sliders:
+            slider.tick(now)
+        return Task.RUNNING
 
     def _on_detail_view_changed(self):
         self.update()
