@@ -210,16 +210,15 @@ class SubSelectorComponent(ModeSelectorComponent):
 			strip.set_solo_button(self._matrix.get_button(track, 6))
 			strip.set_arm_button(self._matrix.get_button(track, 7))
 
-			for button in self._side_buttons:
-				if list(self._side_buttons).index(button) == 0:
-					button.set_on_off_values("Mixer.Stop")
-				elif list(self._side_buttons).index(button) == 1:
-					button.set_on_off_values("Mixer.Mute")
-				elif list(self._side_buttons).index(button) == 2:
-					button.set_on_off_values("Mixer.Solo")
-				elif list(self._side_buttons).index(button) == 3:
-					button.set_on_off_values("Mixer.Arm") 
-				
+		for index, button in enumerate(self._side_buttons):
+			if index == 0:
+				button.set_on_off_values("Mixer.Stop")
+			elif index == 1:
+				button.set_on_off_values("Mixer.Mute")
+			elif index == 2:
+				button.set_on_off_values("Mixer.Solo")
+			elif index == 3:
+				button.set_on_off_values("Mixer.Arm")
 			button.force_next_send()
 			button.turn_off()
 

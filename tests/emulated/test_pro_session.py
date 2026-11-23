@@ -176,3 +176,19 @@ def test_fixed_length_empty_pad_fires_once(pro_rig):
 	empty = slot(pro_rig, 3, 0)
 	pro_rig.tap(3, 0)
 	assert empty.fire_count == 1
+
+
+def test_fixed_length_plus_led_is_off_at_the_maximum(pro_rig, monkeypatch):
+	from Launchpad95.SpecialProSessionComponent import MAX_FIXED_LENGTH
+
+	session = pro_rig.selector._session
+	sent = []
+	button = session._stop_track_clip_buttons[2]
+	monkeypatch.setattr(button, "send_value", lambda value, *a, **k: sent.append(value))
+	session._fixed_length_on = True
+	session._fixed_length = MAX_FIXED_LENGTH
+	session._update_fixed_length_leds(2)
+	assert sent == ["FixedLength.PlusMinus.Off"]
+	session._fixed_length = MAX_FIXED_LENGTH - 1
+	session._update_fixed_length_leds(2)
+	assert sent[-1] == "FixedLength.PlusMinus.On"

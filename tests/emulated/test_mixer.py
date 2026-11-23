@@ -79,3 +79,16 @@ def test_mixer_channels(mixer_rig):
 	assert rig.selector.channel_for_current_mode() == 6
 	rig.tap_side(VOLUME)
 	assert rig.selector.channel_for_current_mode() == 7
+
+
+def test_mixer_overview_sets_up_each_side_button_once(mixer_rig, monkeypatch):
+	rig = mixer_rig
+	sub_modes = rig.selector._sub_modes
+	calls = []
+	for index, button in enumerate(sub_modes._side_buttons):
+		monkeypatch.setattr(button, "set_on_off_values", lambda *a, index=index: calls.append(("values", index)))
+		monkeypatch.setattr(button, "turn_off", lambda index=index: calls.append(("off", index)))
+	sub_modes._setup_mixer_overview()
+	assert [i for kind, i in calls if kind == "values"] == [0, 1, 2, 3]  # once each
+	last = dict((i, kind) for kind, i in calls)
+	assert last == dict((i, "off") for i in range(len(sub_modes._side_buttons)))  # each one sent with its new values

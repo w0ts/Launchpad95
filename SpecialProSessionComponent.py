@@ -1241,7 +1241,7 @@ class SpecialProSessionComponent(SpecialSessionComponent):
 			else:
 				button.send_value("FixedLength.PlusMinus.Off")
 		elif(index==2):
-			if(self._fixed_length <= 31 and self._fixed_length_on):
+			if(self._fixed_length < MAX_FIXED_LENGTH and self._fixed_length_on):
 				button.send_value("FixedLength.PlusMinus.On")
 			else:
 				button.send_value("FixedLength.PlusMinus.Off")
