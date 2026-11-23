@@ -91,6 +91,7 @@ class SpecialClipSlotComponent(ClipSlotComponent):
 	
 	def __init__(self, should_arm = None, *a, **k):
 		super(SpecialClipSlotComponent, self).__init__(*a, **k)
+		self._launched_by_press = False  # the last press launched: forward its release
 		
 	def _set_parent(self, parent):		
 		self._parent = parent
@@ -227,7 +228,8 @@ class SpecialClipSlotComponent(ClipSlotComponent):
 			
 			if button.is_momentary():
 				if(not self.has_clip()):
-					self._clip_slot.fire(record_length=self._get_fixed_length(), launch_quantization=quant)
+					if value:
+						self._clip_slot.fire(record_length=self._get_fixed_length(), launch_quantization=quant)
 				else:
 					self._clip_slot.clip.set_fire_button_state(value != 0)
 			elif launch_pressed:
@@ -306,6 +308,8 @@ class SpecialClipSlotComponent(ClipSlotComponent):
 		if self._is_pro_mode_on():
 		
 			if self.is_enabled():
+				if self._clip_slot is None and not self._is_shifting():
+					return  # no track or scene under this pad; shift actions work on scenes
 				if self._is_deleting() and value:
 					if self._is_shifting():
 						self._parent._do_delete_scene(self._parent)
@@ -333,11 +337,12 @@ class SpecialClipSlotComponent(ClipSlotComponent):
 						self._do_quantize_clip(self._clip_slot)
 				elif self._is_shifting() and value:
 					self._do_select_clip(self._clip_slot)			
-				else:
-					if value:
-						if self._should_arm():
-							self._do_track_arm()
-						self._do_launch_clip(value)
+				elif self._clip_slot is not None and (value or self._launched_by_press):
+					# the release of a launching press goes on too: gate and legato launch modes need it
+					self._launched_by_press = bool(value)
+					if value and self._should_arm():
+						self._do_track_arm()
+					self._do_launch_clip(value)
 		else:
 			super(SpecialClipSlotComponent, self)._launch_button_value(value)
 

@@ -146,3 +146,33 @@ def test_leaving_pro_session_restores_scene_buttons(pro_rig):
 	pro_rig.tap_side(0)
 	pro_rig.song.advance(1.0)
 	assert pro_rig.song.scenes[0].fire_count == 1
+
+
+def test_pad_release_reaches_the_clip_for_gate_launch_mode(pro_rig):
+	clip = slot(pro_rig, 0, 0).clip
+	pro_rig.tap(0, 0)
+	assert clip.fire_button_states == [True, False]
+
+
+def test_pads_past_the_last_track_do_nothing(make_rig, model):
+	rig = make_rig(model, song=make_song(clips=[(0, 0)], num_tracks=4))
+	rig.tap_top(SESSION)
+	rig.tick()
+	assert rig.selector._pro_session_on
+	rig.tap(6, 0)
+	with_modifier(rig, DELETE, lambda: rig.tap(6, 0))
+	with_modifier(rig, RECORD, lambda: rig.tap(6, 0))
+	rig.tick()
+
+
+def test_modifier_press_release_does_not_reach_the_clip(pro_rig):
+	clip = slot(pro_rig, 0, 0).clip
+	with_modifier(pro_rig, QUANTIZE, lambda: pro_rig.tap(0, 0))
+	assert clip.fire_button_states == []
+
+
+def test_fixed_length_empty_pad_fires_once(pro_rig):
+	pro_rig.selector._session._fixed_length_on = True
+	empty = slot(pro_rig, 3, 0)
+	pro_rig.tap(3, 0)
+	assert empty.fire_count == 1

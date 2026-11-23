@@ -197,6 +197,7 @@ class Clip(_Object):
 		self._notes = [MidiNote(MidiNoteSpecification(*note)) for note in notes]
 		self._selected = False
 		self.deprecated_calls = []
+		self.fire_button_states = []
 		self.view = _Object(grid_quantization=0, grid_is_triplet=False, show_loop=lambda: None,
 			show_envelope=lambda: None, hide_envelope=lambda: None)
 
@@ -275,6 +276,8 @@ class Clip(_Object):
 			self.canonical_parent.stop()
 
 	def set_fire_button_state(self, state):
+		# Live 11+: drives every launch mode (gate and legato need the release)
+		self.fire_button_states.append(bool(state))
 		if state:
 			self.fire()
 
