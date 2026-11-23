@@ -41,7 +41,9 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                                       identify_sender=True)
 
     def disconnect(self):
-        self._top_buttons = None
+        for button in self._buttons:
+            button.remove_value_listener(self._loop_button_value)
+        super().disconnect()
 
     @property
     def _number_of_lines_per_note(self):
@@ -82,9 +84,6 @@ class LoopSelectorComponent(ControlSurfaceComponent):
     @property
     def block(self):
         return self._block
-
-    def set_blocksize(self, blocksize):
-        self._blocksize = blocksize
 
     def set_enabled(self, enabled):
         self._force = True
