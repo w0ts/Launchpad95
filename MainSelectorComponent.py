@@ -3,7 +3,7 @@ import time
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
 from _Framework.ModeSelectorComponent import ModeSelectorComponent
-from _Framework.SessionZoomingComponent import DeprecatedSessionZoomingComponent  # noqa
+from _Framework.SessionZoomingComponent import DeprecatedSessionZoomingComponent
 
 from .DeviceControllerComponent import DeviceControllerComponent
 from .InstrumentControllerComponent import InstrumentControllerComponent
@@ -12,7 +12,7 @@ from .Settings import Settings
 from .SpecialProSessionComponent import SpecialProSessionComponent
 from .StepSequencerComponent import StepSequencerComponent
 from .StepSequencerComponent2 import StepSequencerComponent2
-from .SubSelectorComponent import SubSelectorComponent  # noqa
+from .SubSelectorComponent import SubSelectorComponent
 
 # MIDI channel (0-15) of each user sub mode, by its name in Settings.USER_MODES_1/2
 SUB_MODE_CHANNELS = {
