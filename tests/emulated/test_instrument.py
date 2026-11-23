@@ -178,3 +178,38 @@ def test_leaving_instrument_mode_stops_following_the_song_scale(instrument_rig):
 	assert not controller.is_enabled()
 	assert not rig.song.root_note_has_listener(controller.handle_root_note_changed)
 	assert not rig.song.scale_name_has_listener(controller.handle_scale_name_changed)
+
+
+@pytest.mark.parametrize("button", [NEXT_TRACK, 2])
+def test_track_buttons_on_a_return_track_do_not_crash(instrument_rig, button):
+	rig = instrument_rig
+	return_track = rig.song.return_tracks[0]
+	rig.song.view.selected_track = return_track
+	rig.tick()
+	rig.tap_top(button)
+	rig.tick()
+	controller = rig.selector._instrument_controller._track_controller
+	assert controller.selected_clip is None
+
+
+def test_disabling_a_disabled_track_controller_keeps_implicit_arm(make_rig):
+	from harness.devices import LaunchpadX
+
+	rig = make_rig(LaunchpadX)
+	controller = rig.selector._instrument_controller._track_controller
+	assert not controller.is_enabled()
+	track = rig.song.view.selected_track
+	track.implicit_arm = True  # armed by another surface
+	controller.set_enabled(False)
+	assert track.implicit_arm
+
+
+def test_solo_and_undo_work_without_a_session_record_button(instrument_rig):
+	rig = instrument_rig
+	controller = rig.selector._instrument_controller._track_controller
+	controller.set_session_record_button(None)
+	rig.tap_side(SOLO)
+	assert rig.song.tracks[0].solo
+	rig.song.can_undo = True
+	rig.tap_side(UNDO)
+	assert rig.song.undo_steps == ["undo"]

@@ -57,7 +57,7 @@ class TrackControllerComponent(MixerComponent):
 		MixerComponent.disconnect(self)
 
 	def set_enabled(self, enabled):
-		if self.is_enabled and not enabled:
+		if self.is_enabled() and not enabled:
 			# disable implicit arm while leaving.
 			if self._implicit_arm:
 				if self.selected_track.can_be_armed:
@@ -183,7 +183,7 @@ class TrackControllerComponent(MixerComponent):
 		assert (value in range(128))
 		if self.is_enabled():
 			if not sender.is_momentary() or value is not 0:
-				if self.selected_track_idx < len(self.song().tracks) - 1:
+				if self.selected_track_idx is not None and self.selected_track_idx < len(self.song().tracks) - 1:
 					self.song().view.selected_track = self.song().tracks[self.selected_track_idx + 1]
 					if  not self._locked_to_track:
 						self._do_implicit_arm()
@@ -203,7 +203,7 @@ class TrackControllerComponent(MixerComponent):
 		assert (value in range(128))
 		if self.is_enabled():
 			if not sender.is_momentary() or value is not 0:
-				if self.selected_track_idx > 0:
+				if self.selected_track_idx is not None and self.selected_track_idx > 0:
 					self.song().view.selected_track = self.song().tracks[self.selected_track_idx - 1]
 					if  not self._locked_to_track:
 						self._do_implicit_arm()
@@ -364,7 +364,7 @@ class TrackControllerComponent(MixerComponent):
 		assert(self.selected_track != None)
 		if self.is_enabled():
 			now = int(round(time.time() * 1000))
-			if value != 0 or not self._session_record_button.is_momentary():
+			if value != 0 or not self._solo_button.is_momentary():
 				self._last_solo_button_press = now
 				self._solo_button.turn_on()
 			else:
@@ -386,7 +386,7 @@ class TrackControllerComponent(MixerComponent):
 	def _undo_value(self, value):
 		if self.is_enabled():
 			now = int(round(time.time() * 1000))
-			if value != 0 or not self._session_record_button.is_momentary():
+			if value != 0 or not self._undo_button.is_momentary():
 				self._last_undo_button_press = now
 			else:
 				if now - self._last_undo_button_press < self._long_press:
@@ -518,6 +518,8 @@ class TrackControllerComponent(MixerComponent):
 
 	@property
 	def selected_clip(self):
+		if self.selected_track_idx is None:
+			return None  # a return or master track has no clip slots
 		clip_slot = self.selected_scene.clip_slots[self.selected_track_idx]
 		if clip_slot.has_clip:
 			return clip_slot.clip
