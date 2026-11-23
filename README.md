@@ -62,6 +62,17 @@ Live 11+); CI runs them with ruff and black on every push. How to run them and w
 from: [tests/README.md](tests/README.md). The manual's source is `site/`, published by
 `.github/workflows/pages.yml`.
 
+### Releasing
+
+1. In [CHANGELOG.md](CHANGELOG.md), rename `## [Unreleased]` to `## [x.y.z] - YYYY-MM-DD` (a new empty
+   `## [Unreleased]` can go above it) and commit.
+2. Push the commit, then a tag: `git tag vx.y.z && git push origin vx.y.z`.
+
+CI does the rest (`.github/workflows/release.yml`): it runs the tests and lint, builds `Launchpad95.zip` with
+`scripts/build_release.sh`, and creates the GitHub release with that version's CHANGELOG section as its notes
+(`scripts/release_notes.sh`). The release fails if the CHANGELOG has no section for the tag's version. Live 9 and 10
+users stay on the [`legacy-live9-10`](https://github.com/w0ts/Launchpad95/releases/tag/legacy-live9-10) release.
+
 Bug reports and suggestions: [GitHub issues](https://github.com/w0ts/Launchpad95/issues).
 
 ---
