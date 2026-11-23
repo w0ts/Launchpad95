@@ -291,67 +291,66 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
             index_of_sender = list(self._buttons).index(sender)
 
             if (value != 0) or (not sender.is_momentary()):
-                if (value != self._last_sent_value):
 
-                    target_value = self._parameter_to_map_to.value
+                target_value = self._parameter_to_map_to.value
 
-                    if (
-                        self._mode == SLIDER_MODE_TOGGLE) and index_of_sender == 0:
-                        if self._value == self._max:
-                            target_value = self._min
+                if (
+                    self._mode == SLIDER_MODE_TOGGLE) and index_of_sender == 0:
+                    if self._value == self._max:
+                        target_value = self._min
+                    else:
+                        target_value = self._max
+
+                elif self._mode == SLIDER_MODE_SMALL_ENUM:
+                    target_value = index_of_sender + self._min
+
+                elif self._mode == SLIDER_MODE_BIG_ENUM:
+
+                    if index_of_sender >= 4:
+                        inc = 2 ** (index_of_sender - 3 - 1)
+                        if self._value + inc <= self._max:
+                            target_value += inc
                         else:
                             target_value = self._max
-
-                    elif self._mode == SLIDER_MODE_SMALL_ENUM:
-                        target_value = index_of_sender + self._min
-
-                    elif self._mode == SLIDER_MODE_BIG_ENUM:
-
-                        if index_of_sender >= 4:
-                            inc = 2 ** (index_of_sender - 3 - 1)
-                            if self._value + inc <= self._max:
-                                target_value += inc
-                            else:
-                                target_value = self._max
-                        else:
-                            inc = 2 ** (4 - index_of_sender - 1)
-                            if self._value - inc >= self._min:
-                                target_value -= inc
-                            else:
-                                target_value = self._min
-
-
-                    elif (self._mode == SLIDER_MODE_SLIDER):
-                        target_value = self._value_map[
-                                           index_of_sender] * self._range + self._min
-
-                    elif (self._mode == SLIDER_MODE_PRECISION_SLIDER):
-                        inc = float(self._range) / 128
-                        if self._range > 7 and inc < 1:
-                            inc = 1
-                        if index_of_sender >= 4:
-                            inc = inc * 2 ** (index_of_sender - 3 - 1)
-                            if self._value + inc <= self._max:
-                                target_value += inc
-                            else:
-                                target_value = self._max
-                        else:
-                            inc = inc * 2 ** (4 - index_of_sender - 1)
-                            if self._value - inc >= self._min:
-                                target_value -= inc
-                            else:
-                                target_value = self._min
-                    if not self._timed_mode:
-                        self.update_current_parameter_value(target_value, value)
                     else:
-                        self._primed_target_value = target_value
-                        self._timed_step = 0
-                        self._timed_start = time.time()
-                        self._last_pressed_index = index_of_sender
+                        inc = 2 ** (4 - index_of_sender - 1)
+                        if self._value - inc >= self._min:
+                            target_value -= inc
+                        else:
+                            target_value = self._min
 
-                    self.update()
-                    if self._parent is not None:
-                        self._custom_update_OSD()
+
+                elif (self._mode == SLIDER_MODE_SLIDER):
+                    target_value = self._value_map[
+                                       index_of_sender] * self._range + self._min
+
+                elif (self._mode == SLIDER_MODE_PRECISION_SLIDER):
+                    inc = float(self._range) / 128
+                    if self._range > 7 and inc < 1:
+                        inc = 1
+                    if index_of_sender >= 4:
+                        inc = inc * 2 ** (index_of_sender - 3 - 1)
+                        if self._value + inc <= self._max:
+                            target_value += inc
+                        else:
+                            target_value = self._max
+                    else:
+                        inc = inc * 2 ** (4 - index_of_sender - 1)
+                        if self._value - inc >= self._min:
+                            target_value -= inc
+                        else:
+                            target_value = self._min
+                if not self._timed_mode:
+                    self.update_current_parameter_value(target_value, value)
+                else:
+                    self._primed_target_value = target_value
+                    self._timed_step = 0
+                    self._timed_start = time.time()
+                    self._last_pressed_index = index_of_sender
+
+                self.update()
+                if self._parent is not None:
+                    self._custom_update_OSD()
             elif (value == 0):
                 index_of_sender = list(self._buttons).index(sender)
                 if self._timed_mode and index_of_sender == self._last_pressed_index:
