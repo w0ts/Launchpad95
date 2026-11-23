@@ -347,10 +347,10 @@ class NoteSelectorComponent(ControlSurfaceComponent):
 
     def set_selected_note(self, selected_note):
         if self.is_drumrack:
-            self._root_note = int((selected_note + 12) / 16 - 1) * 16 + 4
+            self._root_note = ((selected_note + 12) // 16 - 1) * 16 + 4
             self._offset = (selected_note - self._root_note + 16) % 16
         else:
-            self._root_note = int((selected_note - self._key) / 12) * 12 + self._key
+            self._root_note = (selected_note - self._key) // 12 * 12 + self._key
             self._offset = (selected_note + 12 - self._root_note) % 12
 
         self._step_sequencer._scale_updated()

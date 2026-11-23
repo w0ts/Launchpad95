@@ -279,3 +279,11 @@ def test_multinote_two_lines_per_note_rows_share_a_pitch(seq_rig):
 	pitches = [n[0] for n in sorted(clip(rig).note_tuples(), key=lambda n: n[1])]
 	keys = seq._note_editor._key_indexes
 	assert sorted(pitches) == sorted([keys[3], keys[3], keys[2]])
+
+
+@pytest.mark.parametrize("note", [0, 3, 4, 11, 12, 40, 127])
+def test_note_selector_selects_low_notes(seq_rig, note):
+	selector = stepseq(seq_rig)._note_selector
+	selector.set_key(5)
+	selector.set_selected_note(note)
+	assert selector._root_note + selector._offset == note

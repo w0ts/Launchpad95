@@ -63,4 +63,18 @@ def test_guitar_layout_has_the_b_string_shift(scales):
 
 def test_notes_stay_in_midi_range(scales):
 	p = pattern(scales, steps=[1, 3], origin=[0, 0], base_note=96)
-	assert all(0 <= p.note(x, y).index < 128 for x in range(8) for y in range(8))
+	indexes = [p.note(x, y).index for x in range(8) for y in range(8)]
+	assert all(index is None or 0 <= index < 128 for index in indexes)
+
+
+def test_negative_origin_goes_down_an_octave(scales):
+	p = pattern(scales, steps=[1, 3], origin=[-1, 0])
+	assert p.note(0, 0).index == 47  # one degree below C3: B2
+
+
+def test_notes_outside_midi_range_are_no_note(scales):
+	low = pattern(scales, steps=[1, 3], origin=[0, 0], base_note=-24)
+	assert low.note(0, 0).index is None
+	assert not low.note(0, 0).valid
+	high = pattern(scales, steps=[1, 3], origin=[0, 0], base_note=120)
+	assert high.note(7, 0).index is None

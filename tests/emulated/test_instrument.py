@@ -87,13 +87,14 @@ def test_octave_buttons_shift_the_pads_by_an_octave(instrument_rig):
 	assert pattern_note(rig, 0, 7).index == low - 12
 
 
-@pytest.mark.xfail(strict=True, reason="bug: InstrumentControllerComponent octave buttons go down to octave -2 (and up to 10) while MelodicPattern.note wraps pitches with % 128, so the bottom pads play the highest notes")
 def test_lowest_octave_does_not_wrap_around(instrument_rig):
 	rig = instrument_rig
 	for _ in range(10):
 		rig.tap_side(OCTAVE_DOWN)
 	notes = [pattern_note(rig, 0, y).index for y in range(7, -1, -1)]
-	assert notes == sorted(notes)
+	played = [n for n in notes if n is not None]  # None: below MIDI note 0, the pad plays nothing
+	assert played and played == sorted(played)
+	assert all(0 <= n < 128 for n in played)
 
 
 def test_scale_editor_sets_the_song_key_and_scale(instrument_rig):
