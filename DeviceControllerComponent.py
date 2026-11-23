@@ -150,7 +150,7 @@ class DeviceControllerComponent(DeviceComponent):
                 self.set_device_view()
         # disable matrix.
         for slider in self._sliders:
-            temp=slider.set_enabled(active)
+            slider.set_enabled(active)
             slider.set_stepless_mode(self._stepless_mode)
         # ping parent
         DeviceComponent.set_enabled(self, active)
@@ -179,7 +179,7 @@ class DeviceControllerComponent(DeviceComponent):
                         self._osd.attribute_names[i] = " "
                         self._osd.attributes[i] = " "
                     i += 1
-            except:
+            except Exception:
                 for i in range(8):
                     self._osd.attribute_names[i] = " "
                     self._osd.attributes[i] = " "
@@ -205,7 +205,7 @@ class DeviceControllerComponent(DeviceComponent):
                     self._osd.info[1] = "device : " + name + " (locked)"
                 else:
                     self._osd.info[1] = "device : " + name
-            except:
+            except Exception:
                 self._osd.info[1] = "no device selected"
             self._osd.update()
 

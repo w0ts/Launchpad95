@@ -24,7 +24,7 @@ def log(message):
     global log_num
     if Settings.LOGGING:
         with open(LOG_FILE, 'a') as f:
-            if type(message) == list:
+            if type(message) is list:
                 message = '\n'.join(message)
             f.write(str(log_num) + ' ' + str(message) + '\n')
         log_num += 1

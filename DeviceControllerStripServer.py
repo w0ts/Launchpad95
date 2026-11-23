@@ -93,7 +93,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
             else:
                 return "None"
 
-        except:
+        except Exception:
             return "None"
 
     def param_value(self):
@@ -102,7 +102,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                 return self._parameter_to_map_to.value
             else:
                 return 0
-        except:
+        except Exception:
             return 0
 
     @property
@@ -572,7 +572,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                 if not self._parameter_to_map_to.value == self._target_value:
                     # log(f"A {self._column} Putting {self._parameter_to_map_to.name} on stack")
                     self._put_parameter_on_stack()
-            except:
+            except Exception:
                 self._enabled = False
                 # this is the case when a device gets deleted and the connection is made to the previous in chain device
                 pass
@@ -585,7 +585,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                 if not self._parameter_to_map_to.value == self._target_value:
                     # log(f"B {self._column} Putting {self._parameter_to_map_to.name} on stack")
                     self._put_parameter_on_stack()
-            except:
+            except Exception:
                 # this is the case when a device gets deleted and the connection is made to the previous in chain device
                 pass
             self._call_dispatcher(funct_name, *args, **kwargs)

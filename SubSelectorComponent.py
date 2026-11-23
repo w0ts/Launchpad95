@@ -167,7 +167,7 @@ class SubSelectorComponent(ModeSelectorComponent):
 			elif self._mode_index == 3:
 				self._setup_send2_mode()
 			else:
-				assert False
+				raise AssertionError
 			if (self._update_callback != None):
 				self._update_callback()
 			self._mixer.set_allow_update(True)

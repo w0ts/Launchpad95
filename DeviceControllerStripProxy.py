@@ -31,7 +31,7 @@ class DeviceControllerStripProxy:
     def __getattr__(self, item):
         #log(f'Proxy{self.column}: __getattr__ {item}')
         if self.failed:
-            raise AttributeError("device strip %s failed: no %s" % (self.column, item))
+            raise AttributeError(f"device strip {self.column} failed: no {item}")
         if item in non_returns:
             return partial(self._call_non_return_handler, item)
         elif item in returning:

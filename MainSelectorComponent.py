@@ -179,7 +179,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 					session_mode_changed = True
 		self._last_mode_index = new_mode			 
 		super()._mode_value(value, sender)
-		if session_mode_changed == True:
+		if session_mode_changed:
 			self._update_mode() 
 
 	def number_of_modes(self):
@@ -285,7 +285,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 				self._update_control_channels()
 				self._mode_index = 3
 			else:
-				assert False
+				raise AssertionError
 
 			self._session.set_allow_update(True)
 			self._zooming.set_allow_update(True)
@@ -485,7 +485,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 				self._device_controller.update()
 			else:
 				self._device_controller._is_active = False
-				temp=self._device_controller.set_enabled(False)
+				self._device_controller.set_enabled(False)
 
 	def _setup_user_mode(self, release_matrix=True, release_side_buttons=True, release_nav_buttons=True, drum_rack_mode=True):
 		# user1 -> All True but release_nav_buttons / user2 -> All false 

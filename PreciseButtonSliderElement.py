@@ -42,7 +42,7 @@ class PreciseButtonSliderElement(ButtonSliderElement):
 				elif self._mode == SLIDER_MODE_PAN:
 					self._send_value_pan(value)
 				else:
-					assert False
+					raise AssertionError
 				self._last_sent_value = value
 
 	def connect_to(self, parameter):

@@ -30,7 +30,7 @@ def requested_keys():
 			continue
 		tree = ast.parse(open(path).read())
 		for node in ast.walk(tree):
-			where = "%s:%d" % (os.path.basename(path), getattr(node, "lineno", 0))
+			where = f"{os.path.basename(path)}:{getattr(node, 'lineno', 0)}"
 			if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in SKIN_KEY_CALLS:
 				args = list(_string_args(node))
 				single = node.func.attr == "set_on_off_values" and len(node.args) == 1
@@ -50,15 +50,15 @@ def dynamic_keys(package):
 	keys = []
 	for mode in list(settings.USER_MODES_1) + list(settings.USER_MODES_2):
 		name = selector.getSkinName(None, mode)
-		keys += ["Mode.%s.On" % name, "Mode.%s.Off" % name]
+		keys += [f"Mode.{name}.On", f"Mode.{name}.Off"]
 	# NoteEditorComponent: "StepSequencer.NoteEditor.Velocity" + index, 5 velocities.
-	keys += ["StepSequencer.NoteEditor.Velocity%d" % index for index in range(5)]
+	keys += [f"StepSequencer.NoteEditor.Velocity{index}" for index in range(5)]
 	# TrackControllerComponent: set_on_off_values("Mode." + skin_name), default skin name "Session".
 	keys += ["Mode.Session.On", "Mode.Session.Off"]
 	# DeviceControllerStripServer custom colours and press-time steps.
 	for column in range(8):
-		keys += ["Device.CustomSlider%d.%s" % (column, part) for part in ("On", "Off", "Third", "Half")]
-	keys += ["Device.ColorSteps.Step%d" % step for step in range(10)]
+		keys += [f"Device.CustomSlider{column}.{part}" for part in ("On", "Off", "Third", "Half")]
+	keys += [f"Device.ColorSteps.Step{step}" for step in range(10)]
 	return keys
 
 
@@ -79,7 +79,7 @@ def has_key(skin, key):
 
 
 
-CUSTOM_SLIDER_KEYS = {"Device.CustomSlider%d.%s" % (column, part) for column in range(8) for part in ("Third", "Half")}
+CUSTOM_SLIDER_KEYS = {f"Device.CustomSlider{column}.{part}" for column in range(8) for part in ("Third", "Half")}
 
 
 def missing_literal_keys(skin):
@@ -90,7 +90,7 @@ def missing_literal_keys(skin):
 		else:
 			ok = has_key(skin, key)
 		if not ok:
-			missing.add("%s %s" % (where, key))
+			missing.add(f"{where} {key}")
 	return missing
 
 

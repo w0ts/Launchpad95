@@ -527,7 +527,7 @@ class InstrumentControllerComponent(CompoundComponent):
 			else:
 				self._scales.set_drumrack(False)
 
-			for button, (x, y) in self._matrix.iterbuttons():
+			for button, _ in self._matrix.iterbuttons():
 				button.use_default_message()
 				button.set_channel(non_feedback_channel)
 				#button.force_next_send()
