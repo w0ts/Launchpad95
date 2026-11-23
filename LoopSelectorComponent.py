@@ -2,6 +2,7 @@ import time
 
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
+from .ClipNotes import write_all_notes
 
 STEPSEQ_MODE_MULTINOTE = 2
 class LoopSelectorComponent(ControlSurfaceComponent):
@@ -280,8 +281,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                 new_notes.append(
                     [note[0], note[1] + new_start - start, note[2], note[3],
                      note[4]])
-        self._clip.select_all_notes()
-        self._clip.replace_selected_notes(tuple(new_notes))
+        write_all_notes(self._clip, new_notes)
 
     # Checks if a range is empty OK
     def _no_notes_in_range(self, start, end, or_after):
@@ -296,8 +296,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
         for note in list(self._note_cache):
             if note[1] < start or note[1] >= end:
                 new_notes.append(note)
-        self._clip.select_all_notes()
-        self._clip.replace_selected_notes(tuple(new_notes))
+        write_all_notes(self._clip, new_notes)
 
     # Mutes a block of notes OK
     def _mute_notes_in_range(self, start, end):
@@ -309,5 +308,4 @@ class LoopSelectorComponent(ControlSurfaceComponent):
             else:
                 new_notes.append([note[0], note[1], note[2], note[3],
                                   not note[4]])  # Negate mute state
-        self._clip.select_all_notes()
-        self._clip.replace_selected_notes(tuple(new_notes))
+        write_all_notes(self._clip, new_notes)

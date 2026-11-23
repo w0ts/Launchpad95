@@ -1,5 +1,6 @@
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from _Framework.ButtonElement import ButtonElement
+from .ClipNotes import read_all_notes, write_all_notes
 import time
 
 class NoteEditorComponent(ControlSurfaceComponent):
@@ -144,9 +145,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 	def update_notes(self): # Deprecated ???
 		if self._clip != None:
-			self._clip.select_all_notes()
-			note_cache = self._clip.get_selected_notes()
-			self._clip.deselect_all_notes()
+			note_cache = read_all_notes(self._clip)
 			if self._clip_notes != note_cache:
 				self._clip_notes = note_cache
 		self._update_matrix()
@@ -360,10 +359,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 				velocity = self._velocity #setted by velocity button
 				duration = self.quantization #setted by quantization button in StepSequencerComponent
 
-				# TODO: use new better way for editing clip
-
-				self._clip.select_all_notes()
-				note_cache = self._clip.get_selected_notes()
+				note_cache = read_all_notes(self._clip)
 				if self._note_cache != note_cache:
 					self._note_cache = note_cache
 
@@ -385,10 +381,9 @@ class NoteEditorComponent(ControlSurfaceComponent):
 						break
 				else:
 					note_cache.append([pitch, time, duration, velocity, self._is_mute_shifted]) # (pitch, time, duration, velocity, mute state)
-				self._clip.select_all_notes()
-				self._clip.replace_selected_notes(tuple(note_cache))
+				write_all_notes(self._clip, note_cache)
 
-				note_cache = self._clip.get_selected_notes()
+				note_cache = read_all_notes(self._clip)
 				if self._note_cache != note_cache:
 					self._note_cache = note_cache
 
@@ -449,8 +444,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 	# Mute all entries for a given MIDI note OK
 	def mute_lane(self, pitch_to_mute):
 		if self.is_enabled() and self._clip != None:
-			self._clip.select_all_notes()
-			note_cache = self._clip.get_selected_notes()
+			note_cache = read_all_notes(self._clip)
 			if self._note_cache != note_cache:
 				self._note_cache = note_cache
 			note_cache = list(self._note_cache)
@@ -462,9 +456,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 					note_cache.remove(note)
 					note_cache.append([note_to_mute[0], note_to_mute[1], note_to_mute[2], note_to_mute[3], not note_to_mute[4]])
 			if notes_changed > 0:
-				self._clip.select_all_notes()
-				self._clip.replace_selected_notes(tuple(note_cache))
-				note_cache = self._clip.get_selected_notes()
+				write_all_notes(self._clip, note_cache)
 			self.update()
 
 	# Display the third red column to show the current page in multinote mode each time that the metronome goes to new pageOK

@@ -11,6 +11,7 @@ except ImportError:
     # Python 3...
     imap=map
 from .NoteEditorComponent import NoteEditorComponent
+from .ClipNotes import read_all_notes
 from .TrackControllerComponent import TrackControllerComponent
 import time
 from .ScaleComponent import ScaleComponent, MUSICAL_MODES, KEY_NAMES
@@ -587,9 +588,7 @@ class StepSequencerComponent(CompoundComponent):
             if self._clip == None:
                 note_cache = []
             else:
-                self._clip.select_all_notes()
-                note_cache = self._clip.get_selected_notes()
-                self._clip.deselect_all_notes()
+                note_cache = read_all_notes(self._clip)
 
             # update if needed
             if note_cache != self._note_cache:
