@@ -1,4 +1,5 @@
 from _Framework.Skin import Skin
+
 from .ColorsMK1 import Rgb
 
 
@@ -70,6 +71,7 @@ class Colors:
         # stop button
         StopClip = Rgb.ORANGE_HALF
         StopClipTriggered = Rgb.ORANGE_BLINK_HALF
+
     # Enabled = Rgb.GREEN
     # Off = Rgb.GREEN_THIRD
 
@@ -217,6 +219,7 @@ class Colors:
         class SendsSlider:
             On = Rgb.GREEN
             Off = Rgb.GREEN_THIRD
+
         class SendsSlider_1:
             On = Rgb.GREEN
             Off = Rgb.GREEN_THIRD
@@ -279,6 +282,8 @@ class Colors:
 
         class CustomSlider3:
             On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
             Off = Rgb.AMBER_THIRD
 
         class CustomSlider4:
@@ -295,6 +300,8 @@ class Colors:
 
         class CustomSlider6:
             On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
             Off = Rgb.AMBER_THIRD
 
         class CustomSlider7:
@@ -302,7 +309,7 @@ class Colors:
             Third = Rgb.AMBER
             Half = Rgb.AMBER_HALF
             Off = Rgb.AMBER_THIRD
-        
+
         class ColorSteps:
             Step0 = Rgb.RED
             Step1 = Rgb.RED_THIRD
@@ -323,6 +330,7 @@ class Colors:
             Precision = Rgb.AMBER
             Normal = Rgb.AMBER_THIRD
             Stepless = Rgb.GREEN
+
         class Enum:
             On = Rgb.AMBER
             Off = Rgb.AMBER_THIRD
@@ -453,7 +461,7 @@ class Colors:
         class Play:
             On = Rgb.RED
             Off = Rgb.RED_THIRD
-		
+
         class Lock:
             On = Rgb.RED
             Off = Rgb.RED_THIRD
