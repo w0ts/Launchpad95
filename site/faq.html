@@ -1,0 +1,75 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Launchpad95 · FAQ</title>
+<meta name="description" content="Launchpad95: an Ableton Live control surface script for Novation Launchpads, with an instrument mode, scales, two step sequencers and a device controller.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23171716'/%3E%3Cg fill='%2339ff14'%3E%3Crect x='5' y='5' width='6' height='6' rx='1'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1'/%3E%3Crect x='21' y='5' width='6' height='6' rx='1'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1'/%3E%3Crect x='21' y='13' width='6' height='6' rx='1'/%3E%3Crect x='5' y='21' width='6' height='6' rx='1'/%3E%3Crect x='13' y='21' width='6' height='6' rx='1'/%3E%3Crect x='21' y='21' width='6' height='6' rx='1'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://w0ts.github.io/site-style/common.css">
+<style>
+:root { --accent: #39ff14; --accent-text-l: #1a7a0a; --accent-text-d: #39ff14; }
+main code { overflow-wrap: anywhere; }
+</style>
+<script src="https://w0ts.github.io/site-style/switcher.js" defer></script>
+</head>
+<body>
+<main>
+  <header class="site">
+    <div class="titlebar"><h1><a href="https://w0ts.github.io/">w0ts</a> / Launchpad95</h1></div>
+    <nav class="site" aria-label="Launchpad95 pages"><a href="./">About</a><a href="install.html">Install</a><a href="manual.html">Manual</a><a href="faq.html" aria-current="page">FAQ</a><a href="https://github.com/w0ts/Launchpad95" aria-label="Launchpad95 on GitHub" title="Launchpad95 on GitHub"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav>
+  </header>
+  <section id="faq">
+    <h2>F.A.Q.</h2>
+    <dl class="terms">
+      <dt id="faq-1">1. Which Launchpads are supported?</dt>
+      <dd>Launchpad, Launchpad S, Mini, Mini MK2 and MK2 (RGB), Mini MK3 and Launchpad X: basically every Launchpad but the Pro. The Launchpad Pro is supported by <a href="https://w0ts.github.io/Launchpad_Pro95/">Launchpad Pro95</a>.</dd>
+      <dt id="faq-2">2. Which Ableton Live versions are supported?</dt>
+      <dd>Live 11 and later, Mac or Windows, Intro, Standard or Suite. Live 9.2 to 10 are served by the <a href="https://github.com/w0ts/Launchpad95/releases/tag/legacy-live9-10">archived Live 9/10 release</a>, which no longer changes.<br>From time to time Ableton changes Live's Python API without notice, and Launchpad95 may stop working. If it stopped working after a Live update, download the <a href="https://github.com/w0ts/Launchpad95/releases/latest">latest version</a>, and if that does not help, <a href="https://github.com/w0ts/Launchpad95/issues">open an issue</a>.</dd>
+      <dt id="faq-3">3. Where should I put the script?</dt>
+      <dd>In Live's browser, go to your User Library and create a folder <b>Remote Scripts</b>. Right-click this folder and select <i>Show in Finder</i> / <i>Show in Explorer</i>. Copy the Launchpad95 folder there.
+        <img src="setup-folders.png" alt="The User Library in Finder: Remote Scripts, then Launchpad95 with its .py files" width="701" height="227" class="shot"></dd>
+      <dt id="faq-4">4. Where should I put the script for Live 9 (archived release)?</dt>
+      <dd>
+        <details>
+          <summary>Live 9 installs the script inside the Live application</summary>
+          <p>On Windows: inside <code>C:\ProgramData\Ableton\Live 9 Suite\Resources\MIDI Remote Scripts</code>.<br>On a Mac, right-click the Live application you use (there may be more than one installed!) and select <i>Show Package Contents</i>, then browse to <code>App-Resources/MIDI Remote Scripts</code>.</p>
+          <p>Inside this <code>MIDI Remote Scripts</code> folder you should have a folder called <code>Launchpad95</code>, holding a bunch of <code>.py</code> files, and for each of them a <code>.pyc</code> file (the compiled version that Live makes as it starts).</p>
+          <p>Sometimes a picture is worth 1000 words. On a Mac it looks like this:</p>
+          <img src="setup-folders-9.png" alt="Live 9 on a Mac: MIDI Remote Scripts inside the application package, with Launchpad95" width="609" height="204" class="shot">
+          <p>On a PC like that:</p>
+          <img src="setup-folder-9-win.png" alt="Live 9 on Windows: MIDI Remote Scripts under ProgramData, with Launchpad95" width="696" height="400" class="shot">
+        </details>
+      </dd>
+      <dt id="faq-5">5. I installed everything, but the Launchpad does not light up when I select Launchpad95 in Live's settings. What is wrong?</dt>
+      <dd>It is hard to guess what went wrong; the install is probably not quite right. Try installing from scratch: download, unzip, copy, restart Live. Things to check:
+        <ul>
+          <li>that you installed it in the right place (see <a href="#faq-3">question 3</a>);</li>
+          <li>the folder name AND its full path (again, see the picture in <a href="#faq-3">question 3</a>);</li>
+          <li>how many versions of Live you have installed;</li>
+          <li>that you run Live 11 or later (for Live 9.2 and 10, the <a href="https://github.com/w0ts/Launchpad95/releases/tag/legacy-live9-10">archived release</a>; for Live 8, Launchpad85, no longer maintained);</li>
+          <li>on a Launchpad X or Mini MK3, that Input and Output are the MIDI port, not the DAW port (see <a href="install.html">Setup</a>).</li>
+        </ul></dd>
+      <dt id="faq-6">6. I installed everything, but Launchpad95 does not appear in the Control Surface list. What is wrong?</dt>
+      <dd>See <a href="#faq-5">question 5</a>.</dd>
+      <dt id="faq-7">7. Note feedback does not work in the Instrument Controller</dt>
+      <dd>Make sure the Launchpad MIDI input and output have <b>Track</b> turned on in Live's MIDI settings.</dd>
+      <dt id="faq-8">8. Live 8?</dt>
+      <dd>Live 8.4 had its own version, Launchpad85, which is no longer maintained.</dd>
+    </dl>
+  </section>
+
+  <section id="issues">
+    <h2>Known issues</h2>
+    <ul>
+      <li><b>Older versions on Live 11 and later</b> make Live show this warning about Launchpad95:
+        <img src="live11-api.png" alt="Live's warning: a custom MIDI Remote Script uses an older process to modify MIDI notes" width="494" height="277" class="shot">
+        <p>It concerns only the step sequencers, which used Live's older note functions: editing a clip with them lost MPE, probability, velocity deviation and release velocity. The current version uses the note functions of Live 11 and keeps probability, velocity deviation and release velocity when it rewrites a note. If you still use an older version and do not use the step sequencers, you can ignore the warning.</p></li>
+      <li>Archived Live 9 release: in Live 9, moving notes in the clip editor while the step sequencer is open duplicates notes.</li>
+      <li>Launchpad85, for Live 8, is no longer maintained.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

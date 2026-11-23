@@ -74,7 +74,7 @@ jobs:
           SSH_OPTS="-i ~/.ssh/id_deploy -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
           ssh $SSH_OPTS "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p '${DEPLOY_PATH}'"
           scp $SSH_OPTS "${ZIP_NAME}" "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
-          # Upload site assets (index.html + images + manual PDF)
+          # Upload site assets (the site pages + images + manual PDF)
           scp $SSH_OPTS -p site/*.html site/*.png site/*.pdf "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
           ssh $SSH_OPTS "${DEPLOY_USER}@${DEPLOY_HOST}" "ls -la '${DEPLOY_PATH}'"
 

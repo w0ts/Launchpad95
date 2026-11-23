@@ -48,7 +48,7 @@ You need **Ableton Live 11 or later** (Mac or Windows). For Live 9 and 10, use t
    `LPMiniMK3 MIDI`), not the DAW port.
 4. Turn on **Track**, **Sync** and **Remote** for the Launchpad ports in the MIDI Ports list.
 
-Step by step, with pictures and a F.A.Q.: [the manual](https://w0ts.github.io/Launchpad95/#install). Options (user
+Step by step, with pictures and a F.A.Q.: [the install page](https://w0ts.github.io/Launchpad95/install.html). Options (user
 modes, stepless sliders, volume levels, …) are in `Settings.py`.
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
