@@ -255,6 +255,10 @@ class DeviceControllerComponent(DeviceComponent):
             self.set_device(device_to_select)
 
     def set_device(self, device):
+        if self._is_locked_to_device:
+            locked = self._locked_devices[self._locked_device_index]
+            if locked != None and device != locked:
+                return  # the framework follows the appointed device: not while locked
         if device != self._device:
             if self._bank_index is None or self._number_of_parameter_banks() <= self._bank_index:
                 self._bank_index = 0

@@ -178,6 +178,11 @@ def test_long_press_on_a_lock_button_stores_and_locks_the_device(two_track_rig):
     assert any("STORED IN LOCK: 1" in m for m in rig.messages)
     assert controller._device is first
     assert osd(rig).info[1] == "device : First (locked)"
+    rig.song.view.selected_track = rig.song.tracks[1]
+    rig.song.appointed_device = rig.devices[1]  # Live appoints the new track's device
+    rig.tick()
+    assert controller._device is first  # still locked
+    assert controller._sliders[0]._parameter_to_map_to is first.parameters[1]
 
 
 def test_short_press_unlocks_then_relocks(two_track_rig):
