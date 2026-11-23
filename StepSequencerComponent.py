@@ -656,7 +656,8 @@ class StepSequencerComponent(CompoundComponent):
                     self._scale_selector_button.set_on_off_values("DefaultButton.Disabled","DefaultButton.Disabled")
                 if self._mode == STEPSEQ_MODE_SCALE_EDIT:
                     self._scale_selector_button.turn_on()
-                    self._osd.set_mode('Scale')
+                    if self._osd != None:
+                        self._osd.set_mode('Scale')
                 else:
                     self._scale_selector_button.turn_off()
 
@@ -739,10 +740,12 @@ class StepSequencerComponent(CompoundComponent):
                     self._mode_button.set_on_off_values("StepSequencer.Mode")
                     if self._mode == STEPSEQ_MODE_MULTINOTE:
                         self._mode_button.turn_on()
-                        self._osd.update()
+                        if self._osd != None:
+                            self._osd.update()
                     else:
                         self._mode_button.turn_off()
-                        self._osd.update()
+                        if self._osd != None:
+                            self._osd.update()
                 else:
                     self._mode_button.set_light("DefaultButton.Disabled")
 
@@ -852,7 +855,7 @@ class StepSequencerComponent(CompoundComponent):
                     else:
                         self._lock_button.turn_off()
                 else:
-                    self._lock_button.set_light("DefaultButton.Disable")
+                    self._lock_button.set_light("DefaultButton.Disabled")
 
     def set_lock_button(self, button):
         assert (isinstance(button, (ButtonElement, type(None))))
@@ -939,7 +942,7 @@ class StepSequencerComponent(CompoundComponent):
                 self._left_button.add_value_listener(self._left_value, identify_sender=True)
 
     def _left_value(self, value, sender):
-        assert (self._right_button != None)
+        assert (self._left_button != None)
         assert (value in range(128))
         if self.is_enabled() and self._clip != None:
             if ((value is not 0) or (not sender.is_momentary())):

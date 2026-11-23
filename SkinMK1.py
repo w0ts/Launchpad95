@@ -279,6 +279,8 @@ class Colors:
 
         class CustomSlider3:
             On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
             Off = Rgb.AMBER_THIRD
 
         class CustomSlider4:
@@ -295,6 +297,8 @@ class Colors:
 
         class CustomSlider6:
             On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
             Off = Rgb.AMBER_THIRD
 
         class CustomSlider7:

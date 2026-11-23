@@ -2,7 +2,6 @@
 import ast
 import glob
 import os
-import re
 import sys
 
 import pytest
@@ -80,18 +79,7 @@ def has_key(skin, key):
 
 
 
-# Missing keys (file and key, no line) that are known bugs, each with its own strict xfail test below. Once a bug
-# is fixed its xfail test passes (strict -> failure): remove the entry here and the mark.
-KNOWN_MISSING = {
-	"StepSequencerComponent.py DefaultButton.Disable",
-	"StepSequencerComponent2.py DefaultButton.Disaled",
-}
-KNOWN_MISSING_MK1 = {"Device.CustomSlider%d.%s" % (column, part) for column in (3, 6) for part in ("Third", "Half")}
-
-
-def without_lines(missing):
-	"""'File.py:123 Key' -> 'File.py Key', so known entries survive edits elsewhere in the file."""
-	return {re.sub(r":\d+ ", " ", entry, count=1) for entry in missing}
+CUSTOM_SLIDER_KEYS = {"Device.CustomSlider%d.%s" % (column, part) for column in range(8) for part in ("Third", "Half")}
 
 
 def missing_literal_keys(skin):
@@ -113,34 +101,24 @@ def test_the_scan_finds_skin_keys():
 
 
 def test_literal_skin_keys_exist(skin):
-	assert without_lines(missing_literal_keys(skin)) - KNOWN_MISSING == set()
+	assert missing_literal_keys(skin) == set()
 
 
 def test_built_skin_keys_exist(skin, framework):
 	missing = {key for key in dynamic_keys(framework) if not has_key(skin, key)}
-	assert missing - KNOWN_MISSING_MK1 == set()
+	assert missing == set()
 
 
-@pytest.mark.xfail(strict=True, reason="bug: StepSequencerComponent.py:854 uses skin key 'DefaultButton.Disable' (typo of Disabled)")
-def test_step_sequencer_lock_button_key(skin):
-	assert "StepSequencerComponent.py DefaultButton.Disable" not in without_lines(missing_literal_keys(skin))
-
-
-@pytest.mark.xfail(strict=True, reason="bug: StepSequencerComponent2.py:856 uses skin key 'DefaultButton.Disaled' (typo of Disabled)")
-def test_melodic_sequencer_lock_button_key(skin):
-	assert "StepSequencerComponent2.py DefaultButton.Disaled" not in without_lines(missing_literal_keys(skin))
-
-
-@pytest.mark.xfail(strict=True, reason="bug: SkinMK1.py Device.CustomSlider3 and CustomSlider6 lack Third/Half (used when USE_CUSTOM_DEVICE_CONTROL_COLORS)")
 def test_mk1_custom_slider_keys(framework):
+	"""Used when USE_CUSTOM_DEVICE_CONTROL_COLORS is on."""
 	from Launchpad95.SkinMK1 import make_skin
 
 	skin = make_skin()
-	assert all(has_key(skin, key) for key in KNOWN_MISSING_MK1)
+	assert all(has_key(skin, key) for key in CUSTOM_SLIDER_KEYS)
 
 
 def test_rgb_custom_slider_keys(framework):
 	from Launchpad95.SkinMK2 import make_skin
 
 	skin = make_skin()
-	assert all(has_key(skin, key) for key in KNOWN_MISSING_MK1)
+	assert all(has_key(skin, key) for key in CUSTOM_SLIDER_KEYS)

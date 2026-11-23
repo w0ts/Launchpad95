@@ -227,3 +227,20 @@ def test_next_track_button_follows_the_next_track(seq_rig):
 	rig.tap_top(3)
 	rig.tick()
 	assert stepseq(rig)._clip is clip(rig, 1, 0)
+
+
+def test_works_without_an_osd(seq_rig):
+	rig = seq_rig
+	stepseq(rig).set_osd(None)
+	rig.press_side(SCALE)
+	rig.release_side(SCALE)
+	rig.tap_side(MODE)
+	assert stepseq(rig)._mode == 2
+
+
+def test_left_button_works_without_a_right_button(make_rig, model):
+	rig = long_clip_rig(make_rig, model)
+	seq = stepseq(rig)
+	seq.set_left_button(seq._top_buttons[2])
+	seq.set_right_button(None)
+	seq._left_value(127, seq._left_button)
