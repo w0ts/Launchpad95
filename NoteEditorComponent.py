@@ -218,145 +218,109 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
     # Updates the LP LEDs OK
     def _update_matrix(self):
-        if self.is_enabled() and self._matrix != None:
+        if not self.is_enabled() or self._matrix == None:
+            return
+        for x in range(self.width):
+            for y in range(self.height):
+                self._grid_back_buffer[x][y] = "DefaultButton.Disabled"
+        if self._clip != None and self._note_cache != None:
+            play = self._play_cell()
+            self._draw_playhead_and_markers(play)
+            for note in self._note_cache:
+                self._draw_note(note, play)
+            # Display the column to show the page for half a second
+            if self._display_page:
+                if time.time() - self._display_page_time > 0.5:
+                    self._display_page = False
+                self._display_selected_page()
+        self._flush_grid()
 
-            # clear back buffer
-            for x in range(self.width):
-                for y in range(self.height):
-                    self._grid_back_buffer[x][y] = "DefaultButton.Disabled"
+    def _play_cell(self):
+        """(page, row, x, y) of the playing step, all -1 when not playing."""
+        if self._playhead == None:
+            return -1, -1, -1, -1
+        position = self._playhead  # in beats
+        page = int(position / self.quantization / self.width / self.number_of_lines_per_note)
+        row = int(position / self.quantization / self.width) % self.number_of_lines_per_note
+        x = int(position / self.quantization) % self.width
+        y = int(position / self.quantization / self.width) % self.height
+        return page, row, x, y
 
-            # update back buffer
-            if self._clip != None and self._note_cache != None:
+    def _draw_playhead_and_markers(self, play):
+        play_page, _, play_x, play_y = play
+        if self.display_metronome and self._clip.is_playing and self.song().is_playing:
+            self._grid_back_buffer[play_x][play_y] = "StepSequencer.NoteEditor.Metronome"
+        if self._display_page:
+            self._display_selected_page()
+            if self._display_page_time + 0.25 < time.time():
+                self._display_page = False
+        if self.is_multinote:
+            self._display_note_markers()
+            if self._current_page != play_page:
+                self._current_page = play_page
+                self._display_current_page()
 
-                # play back position
-                if self._playhead != None:
-                    play_position = (
-                        self._playhead
-                    )  # position in beats (integer = number of beats, decimal subdivisions)
-                    play_page = int(play_position / self.quantization / self.width / self.number_of_lines_per_note)
-                    play_row = int(play_position / self.quantization / self.width) % self.number_of_lines_per_note
-                    play_x_position = int(play_position / self.quantization) % self.width
-                    play_y_position = int(play_position / self.quantization / self.width) % self.height
-                else:
-                    play_position = -1
-                    play_page = -1
-                    play_row = -1
-                    play_x_position = -1
-                    play_y_position = -1
-                # add play positition in amber
-                if self.display_metronome:
-                    if self._clip.is_playing and self.song().is_playing:
-                        self._grid_back_buffer[play_x_position][play_y_position] = "StepSequencer.NoteEditor.Metronome"
+    def _note_row_base(self, pitch):
+        """The top row of the note's lane (multinote), 0 for the selected note (one-note
+        mode), or -1 when the note has no row."""
+        try:
+            index = self.key_indexes.index(pitch)
+        except ValueError:
+            index = -1
+        if not self.is_multinote:
+            return 0 if index == 0 else -1
+        base = index * self.number_of_lines_per_note
+        if base >= 0:
+            base = (7 - base) - (self.number_of_lines_per_note - 1)
+        return base if base >= 0 else -1
 
-                # Display the selected page
-                if self._display_page:
-                    self._display_selected_page()
-                    if self._display_page_time + 0.25 < time.time():
-                        self._display_page = False
+    def _note_cell(self, note):
+        """(x, y, row offset, page) of a cached note on the grid, or None when it has no pad."""
+        position = note[1]  # in beats, like the playhead
+        page = int(position / self.quantization / self.width / self.number_of_lines_per_note)
+        x = int(position / self.quantization) % self.width
+        offset = int(position / self.quantization / self.width) % self.number_of_lines_per_note
+        base = self._note_row_base(note[0])
+        if base == -1 or base >= self.height:
+            return None
+        return x, base + offset, offset, page
 
-                # Display the notes in the 1st left column
-                if self.is_multinote:
-                    self._display_note_markers()
-                    # Display the current played page
-                    if self._current_page != play_page:
-                        self._current_page = play_page
-                        self._display_current_page()
+    def _velocity_color(self, velocity):
+        color = self.velocity_color_map[0]
+        for index in range(len(self.velocity_map)):
+            if velocity >= self.velocity_map[index]:
+                color = self.velocity_color_map[index]
+        return color
 
-                # display clip notes
-                for note in self._note_cache:
-                    note_position = note[1]  # decimal value of a beat (1=beat, same as playhead)
-                    note_key = note[0]  # key: 0-127 MIDI note #
-                    note_velocity = note[3]  # velocity: 0-127 value #
-                    note_muted = note[4]  # Boolean
-                    note_page = int(note_position / self.quantization / self.width / self.number_of_lines_per_note)
-                    note_grid_x_position = int(note_position / self.quantization) % self.width
-                    note_grid_y_position = int(note_position / self.quantization / self.width) % self.height
+    def _draw_note(self, note, play):
+        cell = self._note_cell(note)
+        if cell is None:
+            return
+        x, y, offset, page = cell
+        play_page, play_row, play_x, play_y = play
+        muted = note[4]
+        on_playhead = play_y == y and not self.is_multinote or self.is_multinote and offset == play_row
+        if (
+            not muted
+            and page == play_page
+            and play_x == x
+            and on_playhead
+            and self.song().is_playing
+            and self._clip.is_playing
+        ):
+            # highlight playing notes, even if they are from other pages
+            self._grid_back_buffer[x][y] = self.playing_note_color
+        elif page == self._page and self._grid_back_buffer[x][y] != self.playing_note_color:
+            self._grid_back_buffer[x][y] = self.muted_note_color if muted else self._velocity_color(note[3])
 
-                    # Calculate note position in the grid (note position to matrix button logic)
-                    if self.is_multinote:
-                        # compute base note, taking into account number_of_lines_per_note
-                        try:
-                            note_idx = self.key_indexes.index(note_key)
-                        except ValueError:
-                            note_idx = -1
-                        note_grid_y_base = note_idx * self.number_of_lines_per_note
-                        if note_grid_y_base >= 0:
-                            note_grid_y_base = (7 - note_grid_y_base) - (self.number_of_lines_per_note - 1)
-                        if note_grid_y_base < 0:
-                            note_grid_y_base = -1
-
-                        note_grid_y_offset = (
-                            int(note_position / self.quantization / self.width) % self.number_of_lines_per_note
-                        )
-                    else:
-                        idx = 1
-                        try:
-                            idx = self.key_indexes.index(note_key)
-                        except ValueError:
-                            idx = -1
-
-                        if idx == 0:
-                            note_grid_y_base = 0
-                        else:
-                            note_grid_y_base = -1
-                    note_grid_y_offset = (
-                        int(note_position / self.quantization / self.width) % self.number_of_lines_per_note
-                    )
-
-                    if note_grid_y_base != -1 and note_grid_y_base < self.height:
-                        note_grid_y_position = note_grid_y_base + note_grid_y_offset
-                    else:
-                        note_grid_x_position = -1
-                        note_grid_y_position = -1
-
-                    # Set note color
-                    if note_grid_x_position >= 0:
-                        # compute colors
-                        velocity_color = self.velocity_color_map[0]
-                        for index in range(len(self.velocity_map)):
-                            if note_velocity >= self.velocity_map[index]:
-                                velocity_color = self.velocity_color_map[index]
-                        # highligh playing notes in red. even if they are from other pages.
-                        if (
-                            not note_muted
-                            and note_page == play_page
-                            and play_x_position == note_grid_x_position
-                            and (
-                                play_y_position == note_grid_y_position
-                                and not self.is_multinote
-                                or self.is_multinote
-                                and note_grid_y_offset == play_row
-                            )
-                            and self.song().is_playing
-                            and self._clip.is_playing
-                        ):
-                            self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.playing_note_color
-                        elif note_page == self._page:  # if note is in current page, then update grid
-                            # do not erase current note highlight
-                            if (
-                                self._grid_back_buffer[note_grid_x_position][note_grid_y_position]
-                                != self.playing_note_color
-                            ):
-                                if note_muted:
-                                    self._grid_back_buffer[note_grid_x_position][
-                                        note_grid_y_position
-                                    ] = self.muted_note_color
-                                else:
-                                    self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = velocity_color
-
-                # Display the column to show the page for half a second
-                if self._display_page:
-                    if time.time() - self._display_page_time > 0.5:
-                        self._display_page = False
-                    self._display_selected_page()
-
-            # caching : compare back buffer to buffer and update grid. this should minimize midi traffic quite a bit.
-            for x in range(self.width):
-                for y in range(self.height):
-                    if self._grid_back_buffer[x][y] != self._grid_buffer[x][y] or self._force_update:
-                        self._grid_buffer[x][y] = self._grid_back_buffer[x][y]
-                        self._matrix.get_button(x, y).set_light(self._grid_buffer[x][y])
-            self._force_update = False
+    def _flush_grid(self):
+        """Send only the pads that changed (all of them after a forced update)."""
+        for x in range(self.width):
+            for y in range(self.height):
+                if self._grid_back_buffer[x][y] != self._grid_buffer[x][y] or self._force_update:
+                    self._grid_buffer[x][y] = self._grid_back_buffer[x][y]
+                    self._matrix.get_button(x, y).set_light(self._grid_buffer[x][y])
+        self._force_update = False
 
     def request_display_page(self):  # Reset page column display timer
         self._display_page = True
