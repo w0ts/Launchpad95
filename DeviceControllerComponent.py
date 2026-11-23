@@ -6,11 +6,14 @@ from _Framework.ButtonElement import ButtonElement
 from _Framework.DeviceComponent import DeviceComponent
 
 from .DeviceControllerStrip import DeviceControllerStrip
+from .DeviceNavigation import next_device, previous_device
 from .ParameterSlides import ParameterSlides
 from .Settings import Settings
 
 # Longest time one tick may advance the slides by (Live can stall, e.g. while loading).
 MAX_TICK_SECONDS = 0.5
+# A lock button released this long after its press stores or clears its lock.
+LOCK_LONG_PRESS = 0.4
 
 
 class DeviceControllerComponent(DeviceComponent):
@@ -362,98 +365,68 @@ class DeviceControllerComponent(DeviceComponent):
                 assert isinstance(self._lock_buttons[index - 1], ButtonElement)
                 self._lock_buttons[index - 1].add_value_listener(self._lock_value, identify_sender=True)
 
-    # self.update_lock_buttons()
-
+    # Lock buttons: a long press stores the device in (or clears) the lock, a tap locks to
+    # (or unlocks from) the stored device.
     def _lock_value(self, value, sender):
-        if self.is_enabled():
-            index = 0
-            for i in range(len(self._lock_buttons)):
-                if self._lock_buttons[i] == sender:
-                    index = i
-            if value != 0:  # Button down
-                self._lock_button_press[index] = time.time()
-            else:
-                now = time.time()
-                if now - self._lock_button_press[index] > 0.4:  # long press
-                    if self._locked_devices[index] is None:  # If lock is available
-                        # save locked device
-                        dev = -1
-                        for i in range(len(self._locked_devices)):
-                            if self._locked_devices[i] == self._device:
-                                dev = i
-                        if dev >= 0:  # Device already stored
-                            if self._device is not None:
-                                self._control_surface.show_message(
-                                    "*** WARNING *** '"
-                                    + self.get_device_track_name(self._device)
-                                    + " - "
-                                    + str(self._device.name)
-                                    + "' IS ALREADY IN LOCK: "
-                                    + str(dev + 1)
-                                )
-                        else:  # New device is added
-                            if self._device is not None:
-                                self._locked_devices[index] = self._device
-                                if self._device is not None:
-                                    self._control_surface.show_message(
-                                        " '"
-                                        + self.get_device_track_name(self._device)
-                                        + " - "
-                                        + str(self._device.name)
-                                        + "' STORED IN LOCK: "
-                                        + str(index + 1)
-                                    )
-                                    self._locked_device_index = index
-                                    self.update()
+        if not self.is_enabled():
+            return
+        index = self._lock_index(sender)
+        if value != 0:
+            self._lock_button_press[index] = time.time()
+        elif time.time() - self._lock_button_press[index] > LOCK_LONG_PRESS:
+            self._lock_long_press(index)
+        else:
+            self._lock_short_press(index)
+        self.update_track_buttons()
+        self.update_device_buttons()
+        self._update_OSD()
+        if self._is_locked_to_device:
+            self.on_selected_track_changed()
+        self.update_lock_buttons()
 
-                    else:  # Lock was used
-                        # remove saved device
-                        if self._locked_devices[index] is not None:
-                            self._control_surface.show_message(
-                                "REMOVING '"
-                                + self.get_device_track_name(self._locked_devices[index])
-                                + " - "
-                                + str(self._locked_devices[index].name)
-                                + "' FROM LOCK: "
-                                + str(index + 1)
-                            )
-                            self._locked_devices[index] = None
-                            self._locked_device_index = None
-                else:  # Short press
-                    # use selected device
-                    if self._locked_device_index == index:
-                        if self._locked_devices[index] is not None:
-                            if self._locked_devices[index] is not None:
-                                self._control_surface.show_message(
-                                    "UNLOCKED FROM '"
-                                    + self.get_device_track_name(self._locked_devices[index])
-                                    + " - "
-                                    + str(self._locked_devices[index].name)
-                                    + "' ("
-                                    + str(index + 1)
-                                    + ")"
-                                )
-                        self._locked_device_index = None
-                    elif self._locked_devices[index] is not None:
-                        self._locked_device_index = index
-                        self.set_device(self._locked_devices[index])
-                        if self._locked_devices[index] is not None:
-                            self._control_surface.show_message(
-                                "LOCKED TO '"
-                                + self.get_device_track_name(self._locked_devices[index])
-                                + " - "
-                                + str(self._locked_devices[index].name)
-                                + " ("
-                                + str(index + 1)
-                                + ")"
-                            )
-                        self.update()
-            self.update_track_buttons()
-            self.update_device_buttons()
-            self._update_OSD()
-            if self._is_locked_to_device:
-                self.on_selected_track_changed()
-            self.update_lock_buttons()
+    def _lock_index(self, sender):
+        index = 0
+        for i, button in enumerate(self._lock_buttons):
+            if button == sender:
+                index = i
+        return index
+
+    def _lock_long_press(self, index):
+        locked = self._locked_devices[index]
+        if locked is not None:
+            self._show_lock_message("REMOVING '", locked, "' FROM LOCK: " + str(index + 1))
+            self._locked_devices[index] = None
+            self._locked_device_index = None
+        elif self._device is not None:
+            self._store_lock(index)
+
+    def _store_lock(self, index):
+        stored_in = [i for i, device in enumerate(self._locked_devices) if device == self._device]
+        if stored_in:
+            self._show_lock_message(
+                "*** WARNING *** '", self._device, "' IS ALREADY IN LOCK: " + str(stored_in[-1] + 1)
+            )
+            return
+        self._locked_devices[index] = self._device
+        self._show_lock_message(" '", self._device, "' STORED IN LOCK: " + str(index + 1))
+        self._locked_device_index = index
+        self.update()
+
+    def _lock_short_press(self, index):
+        locked = self._locked_devices[index]
+        if self._locked_device_index == index:
+            if locked is not None:
+                self._show_lock_message("UNLOCKED FROM '", locked, "' (" + str(index + 1) + ")")
+            self._locked_device_index = None
+        elif locked is not None:
+            self._locked_device_index = index
+            self.set_device(locked)
+            self._show_lock_message("LOCKED TO '", locked, " (" + str(index + 1) + ")")
+            self.update()
+
+    def _show_lock_message(self, prefix, device, suffix):
+        name = self.get_device_track_name(device) + " - " + str(device.name)
+        self._control_surface.show_message(prefix + name + suffix)
 
     def get_device_track_name(self, device):
         while device is not None and not isinstance(device, Live.Track.Track):
@@ -702,92 +675,10 @@ class DeviceControllerComponent(DeviceComponent):
                         self.update()
 
     def _get_next_device(self, device):
-        if device is None:
-            return self.selected_track().devices[0] if len(self.selected_track().devices) > 0 else None
-        if isinstance(device, Live.Device.Device):
-            if device.can_have_chains and len(device.chains) > 0 and len(device.chains[0].devices) > 0:
-                return device.chains[0].devices[0]
-            else:
-                next_device = self._get_next_sibling_device(device)
-                if next_device:
-                    return next_device
-                else:
-                    return self._get_next_device_from_parent(device)
-        return None
+        return next_device(device, self.selected_track())
 
     def _get_previous_device(self, device):
-        if device is None:
-            return self.selected_track().devices[-1] if len(self.selected_track().devices) > 0 else None
-        if isinstance(device, Live.Device.Device):
-            previous_sibling = self._get_previous_sibling_device(device)
-            if previous_sibling:
-                return self._get_last_device_in_chain(previous_sibling)
-            elif device.canonical_parent and isinstance(device.canonical_parent, Live.Chain.Chain):
-                return device.canonical_parent.canonical_parent
-            else:
-                return self._get_previous_device_from_parent(device)
-        return None
-
-    def _get_next_sibling_device(self, device):
-        parent = device.canonical_parent
-        if isinstance(parent, Live.Chain.Chain):
-            devices = parent.devices
-            index = list(devices).index(device)
-            if index + 1 < len(devices):
-                return devices[index + 1]
-            elif isinstance(parent.canonical_parent, Live.Device.Device):
-                return self._get_next_sibling_device(parent.canonical_parent)
-        return None
-
-    def _get_previous_sibling_device(self, device):
-        parent = device.canonical_parent
-        if isinstance(parent, Live.Chain.Chain):
-            devices = parent.devices
-            index = list(devices).index(device)
-            if index > 0:
-                return devices[index - 1]
-        return None
-
-    def _get_last_device_in_chain(self, device):
-        if isinstance(device, Live.Device.Device):
-            if device.can_have_chains and len(device.chains) > 0 and len(device.chains[-1].devices) > 0:
-                return self._get_last_device_in_chain(device.chains[-1].devices[-1])
-            else:
-                return device
-        return None
-
-    def _get_next_device_from_parent(self, device):
-        parent = device.canonical_parent
-        if isinstance(parent, Live.Chain.Chain):
-            parent_device = parent.canonical_parent
-            if isinstance(parent_device, Live.Device.Device):
-                next_sibling = self._get_next_sibling_device(parent_device)
-                if next_sibling:
-                    return next_sibling
-                else:
-                    return self._get_next_device_from_parent(parent_device)
-        elif isinstance(parent, Live.Track.Track):
-            devices = list(parent.devices)
-            if device in devices and devices.index(device) < len(devices) - 1:
-                return devices[devices.index(device) + 1]
-        return None
-
-    def _get_previous_device_from_parent(self, device):
-        parent = device.canonical_parent
-        if isinstance(parent, Live.Chain.Chain):
-            return parent.canonical_parent
-        elif isinstance(parent, Live.Track.Track):
-            devices = list(parent.devices)
-            if device in devices and devices.index(device) > 0:
-                return self._get_last_device_in_chain(devices[devices.index(device) - 1])
-        return None
-
-    @property
-    def selected_device_idx(self):
-        devices = list(self.song().view.selected_track.devices)
-        result = devices.index(self._device) if self._device in devices else None
-        # return self.tuple_idx(self.song().view.selected_track.devices, self._device)
-        return result
+        return previous_device(device, self.selected_track())
 
     # DEVICE BANK BUTTONS
     def set_prev_bank_button(self, button):
@@ -809,12 +700,3 @@ class DeviceControllerComponent(DeviceComponent):
             and self._next_bank_button is None
         ):
             self.set_bank_nav_buttons(self._prev_bank_button, self._next_bank_button)
-
-
-# utils
-
-# def tuple_idx(self, tuple, obj):
-# 	for i in range(0, len(tuple)):
-# 		if (tuple[i] == obj):
-# 			return i
-# 	return(False)
