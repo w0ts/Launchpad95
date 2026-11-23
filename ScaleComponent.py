@@ -1,6 +1,8 @@
 import Live
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 
+from .SongScaleListener import SongScaleListener
+
 KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 CIRCLE_OF_FIFTHS = [7 * k % 12 for k in range(12)]
 # KEY_CENTERS = CIRCLE_OF_FIFTHS[0:6] + CIRCLE_OF_FIFTHS[-1:5:-1]
@@ -14,7 +16,7 @@ for name, notes in Live.Song.get_all_scales_ordered():
 TOP_OCTAVE = {"chromatic_gtr": 7, "diatonic_ns": 2, "diatonic_chords": 7, "diatonic": 6, "chromatic": 7}
 
 
-class ScaleComponent(ControlSurfaceComponent):
+class ScaleComponent(SongScaleListener, ControlSurfaceComponent):
 
     # matrix = control_matrix(PlayableControl)
 
@@ -64,34 +66,6 @@ class ScaleComponent(ControlSurfaceComponent):
             return self._modus_names.index(name)
         except ValueError:
             return -1
-
-    def _remove_scale_listeners(self):
-        try:
-            self.song().remove_root_note_listener(self.handle_root_note_changed)
-        except RuntimeError:
-            pass
-        try:
-            self.song().remove_scale_name_listener(self.handle_scale_name_changed)
-        except RuntimeError:
-            pass
-
-    def _register_scale_listeners(self):
-        try:
-            self.song().add_root_note_listener(self.handle_root_note_changed)
-        except RuntimeError:
-            pass
-        try:
-            self.song().add_scale_name_listener(self.handle_scale_name_changed)
-        except RuntimeError:
-            pass
-
-    def handle_root_note_changed(self):
-        self.set_key(self.song().root_note, False, True)
-        self.update()
-
-    def handle_scale_name_changed(self):
-        self.set_modus(self._modus_names.index(self.song().scale_name), False, True)
-        self.update()
 
     def set_enabled(self, enabled):
         ControlSurfaceComponent.set_enabled(self, enabled)

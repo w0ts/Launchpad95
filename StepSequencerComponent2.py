@@ -7,14 +7,19 @@ from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from .ClipNotes import write_all_notes
 from .LoopSelectorComponent import LoopSelectorComponent
 from .NoteSelectorComponent import NoteSelectorComponent
-from .ScaleComponent import KEY_NAMES, MUSICAL_MODES
-from .StepSequencerComponent import QUANTIZATION_NAMES, ButtonElement, StepSequencerComponent
+from .StepSequencerComponent import ButtonElement, StepSequencerComponent
 from .TrackControllerComponent import TrackControllerComponent
 
 STEPSEQ_MODE_NOTES = 1
 STEPSEQ_MODE_NOTES_OCTAVES = 2
 STEPSEQ_MODE_NOTES_VELOCITIES = 3
 STEPSEQ_MODE_NOTES_LENGTHS = 4
+PAGE_NAMES = {
+    STEPSEQ_MODE_NOTES: "Notes",
+    STEPSEQ_MODE_NOTES_OCTAVES: "Octave",
+    STEPSEQ_MODE_NOTES_VELOCITIES: "Velocity",
+    STEPSEQ_MODE_NOTES_LENGTHS: "Length",
+}
 
 LONG_BUTTON_PRESS = 1.0
 
@@ -135,8 +140,7 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
         self._notes_lengths = None
         self._clip = None
 
-    # The song's root note and scale are followed by the step sequencer
-    # (StepSequencerComponent.handle_root_note_changed / handle_scale_name_changed).
+    # The song's root note and scale are followed by the step sequencer (SongScaleListener).
 
     def _init_data(self):
         self._notes_pitches = [0] * (LANES * MIN_STEPS)
@@ -853,74 +857,13 @@ class StepSequencerComponent2(StepSequencerComponent):
         # no drum rack mode for me. i am a melodic step seq.
         self._drum_group_device = None
 
-    def _update_OSD(self):
-        if self._osd != None:
-            self._osd.set_mode("Melodic Step Sequencer")
-            if self._clip != None:
-                self._osd.attributes[0] = MUSICAL_MODES[self._scale_selector._modus * 2]
-                self._osd.attribute_names[0] = "Scale"
-                self._osd.attributes[1] = KEY_NAMES[self._scale_selector._key % 12]
-                self._osd.attribute_names[1] = "Root Note"
-                self._osd.attributes[2] = self._scale_selector._octave
-                self._osd.attribute_names[2] = "Octave"
-                self._osd.attributes[3] = QUANTIZATION_NAMES[self._quantization_index]
-                self._osd.attribute_names[3] = "Quantisation"
-                if self._note_editor._is_monophonic:
-                    self._osd.attributes[4] = "Mono"
-                else:
-                    self._osd.attributes[4] = "Poly"
-                self._osd.attribute_names[4] = "Polyphony"
+    def _osd_mode(self):
+        return "Melodic Step Sequencer"
 
-                self._osd.attribute_names[5] = "Page"
-                if self._note_editor._mode == STEPSEQ_MODE_NOTES:
-                    self._osd.attributes[5] = "Notes"
-                elif self._note_editor._mode == STEPSEQ_MODE_NOTES_OCTAVES:
-                    self._osd.attributes[5] = "Octave"
-                elif self._note_editor._mode == STEPSEQ_MODE_NOTES_VELOCITIES:
-                    self._osd.attributes[5] = "Velocity"
-                elif self._note_editor._mode == STEPSEQ_MODE_NOTES_LENGTHS:
-                    self._osd.attributes[5] = "Length"
-
-                self._osd.attributes[6] = " "
-                self._osd.attribute_names[6] = " "
-                self._osd.attributes[7] = " "
-                self._osd.attribute_names[7] = " "
-            else:
-                self._osd.attributes[0] = " "
-                self._osd.attribute_names[0] = " "
-                self._osd.attributes[1] = " "
-                self._osd.attribute_names[1] = " "
-                self._osd.attributes[2] = " "
-                self._osd.attribute_names[2] = " "
-                self._osd.attributes[3] = " "
-                self._osd.attribute_names[3] = " "
-                self._osd.attributes[4] = " "
-                self._osd.attribute_names[4] = " "
-                self._osd.attributes[5] = " "
-                self._osd.attribute_names[5] = " "
-                self._osd.attributes[6] = " "
-                self._osd.attribute_names[6] = " "
-                self._osd.attributes[7] = " "
-                self._osd.attribute_names[7] = " "
-
-            if self._selected_track != None:
-                if self._lock_to_track and self._is_locked:
-                    self._osd.info[0] = "track : " + self._selected_track.name + " (locked)"
-                else:
-                    self._osd.info[0] = "track : " + self._selected_track.name
-            else:
-                self._osd.info[0] = " "
-            if self._clip != None:
-                name = self._clip.name
-                if name == "":
-                    name = "(unamed clip)"
-                if not self._lock_to_track and self._is_locked:
-                    self._osd.info[1] = "clip : " + name + " (locked)"
-                else:
-                    self._osd.info[1] = "clip : " + name
-            else:
-                self._osd.info[1] = "no clip selected"
-            self._osd.update()
+    def _osd_extra_attributes(self):
+        editor = self._note_editor
+        page = PAGE_NAMES.get(editor._mode, " ")
+        return (("Polyphony", "Mono" if editor._is_monophonic else "Poly"), ("Page", page))
 
     def _update_mode_button(self):
         if self.is_enabled():

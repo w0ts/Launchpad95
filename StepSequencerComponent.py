@@ -3,14 +3,15 @@ import time
 import Live
 from _Framework.ButtonElement import ButtonElement
 from _Framework.CompoundComponent import CompoundComponent
-from _Framework.Util import find_if
 
 from .ClipNotes import read_all_notes
+from .DrumRack import drum_rack_of
 from .LoopSelectorComponent import LoopSelectorComponent
 from .NoteEditorComponent import NoteEditorComponent
 from .NoteSelectorComponent import NoteSelectorComponent
 from .ScaleComponent import KEY_NAMES, MUSICAL_MODES, ScaleComponent
 from .Settings import Settings
+from .SongScaleListener import SongScaleListener
 from .TrackControllerComponent import TrackControllerComponent
 
 # quantization button colours. this must remain of length 4.
@@ -26,7 +27,7 @@ LONG_BUTTON_PRESS = 1.0
 # Scrolls the regions in Multinote Mode
 
 
-class StepSequencerComponent(CompoundComponent):
+class StepSequencerComponent(SongScaleListener, CompoundComponent):
 
     def __init__(self, matrix, side_buttons, top_buttons, control_surface):
         self._osd = None
@@ -235,66 +236,52 @@ class StepSequencerComponent(CompoundComponent):
         self._osd = osd
         self._scale_selector.set_osd(osd)
 
+    def _osd_mode(self):
+        if self._mode == STEPSEQ_MODE_MULTINOTE:
+            return "Drum Step Sequencer (multinote)"
+        return "Drum Step Sequencer"
+
+    def _osd_extra_attributes(self):
+        """(name, value) pairs shown after Scale, Root Note, Octave and Quantisation."""
+        return ()
+
+    def _followed_scale(self):
+        return self._scale_selector
+
     def _update_OSD(self):
-        if self._osd != None:
-            if self._mode == STEPSEQ_MODE_MULTINOTE:
-                self._osd.set_mode("Drum Step Sequencer (multinote)")
-            else:
-                self._osd.set_mode("Drum Step Sequencer")
+        if self._osd == None:
+            return
+        self._osd.set_mode(self._osd_mode())
+        attributes = []
+        if self._clip != None:
+            scale = self._scale_selector
+            attributes = [
+                ("Scale", MUSICAL_MODES[scale._modus * 2]),
+                ("Root Note", KEY_NAMES[scale._key % 12]),
+                ("Octave", scale._octave),
+                ("Quantisation", QUANTIZATION_NAMES[self._quantization_index]),
+                *self._osd_extra_attributes(),
+            ]
+        for index in range(8):
+            name, value = attributes[index] if index < len(attributes) else (" ", " ")
+            self._osd.attribute_names[index] = name
+            self._osd.attributes[index] = value
+        self._osd.info[0] = self._osd_track_line()
+        self._osd.info[1] = self._osd_clip_line()
+        self._osd.update()
 
-            if self._clip != None:
-                self._osd.attributes[0] = MUSICAL_MODES[self._scale_selector._modus * 2]
-                self._osd.attribute_names[0] = "Scale"
-                self._osd.attributes[1] = KEY_NAMES[self._scale_selector._key % 12]
-                self._osd.attribute_names[1] = "Root Note"
-                self._osd.attributes[2] = self._scale_selector._octave
-                self._osd.attribute_names[2] = "Octave"
-                self._osd.attributes[3] = QUANTIZATION_NAMES[self._quantization_index]
-                self._osd.attribute_names[3] = "Quantisation"
-                self._osd.attributes[4] = " "
-                self._osd.attribute_names[4] = " "
-                self._osd.attributes[5] = " "
-                self._osd.attribute_names[5] = " "
-                self._osd.attributes[6] = " "
-                self._osd.attribute_names[6] = " "
-                self._osd.attributes[7] = " "
-                self._osd.attribute_names[7] = " "
-            else:
-                self._osd.attributes[0] = " "
-                self._osd.attribute_names[0] = " "
-                self._osd.attributes[1] = " "
-                self._osd.attribute_names[1] = " "
-                self._osd.attributes[2] = " "
-                self._osd.attribute_names[2] = " "
-                self._osd.attributes[3] = " "
-                self._osd.attribute_names[3] = " "
-                self._osd.attributes[4] = " "
-                self._osd.attribute_names[4] = " "
-                self._osd.attributes[5] = " "
-                self._osd.attribute_names[5] = " "
-                self._osd.attributes[6] = " "
-                self._osd.attribute_names[6] = " "
-                self._osd.attributes[7] = " "
-                self._osd.attribute_names[7] = " "
+    def _osd_track_line(self):
+        if self._selected_track == None:
+            return " "
+        locked = " (locked)" if self._lock_to_track and self._is_locked else ""
+        return "track : " + self._selected_track.name + locked
 
-            if self._selected_track != None:
-                if self._lock_to_track and self._is_locked:
-                    self._osd.info[0] = "track : " + self._selected_track.name + " (locked)"
-                else:
-                    self._osd.info[0] = "track : " + self._selected_track.name
-            else:
-                self._osd.info[0] = " "
-            if self._clip != None:
-                name = self._clip.name
-                if name == "":
-                    name = "(unamed clip)"
-                if not self._lock_to_track and self._is_locked:
-                    self._osd.info[1] = "clip : " + name + " (locked)"
-                else:
-                    self._osd.info[1] = "clip : " + name
-            else:
-                self._osd.info[1] = "no clip selected"
-            self._osd.update()
+    def _osd_clip_line(self):
+        if self._clip == None:
+            return "no clip selected"
+        name = self._clip.name or "(unamed clip)"
+        locked = " (locked)" if not self._lock_to_track and self._is_locked else ""
+        return "clip : " + name + locked
 
     @property
     def _is_velocity_shifted(self):
@@ -305,34 +292,6 @@ class StepSequencerComponent(CompoundComponent):
             if pad_list[i] == pad:
                 return i
         return -1
-
-    def _remove_scale_listeners(self):
-        try:
-            self.song().remove_root_note_listener(self.handle_root_note_changed)
-        except RuntimeError:
-            pass
-        try:
-            self.song().remove_scale_name_listener(self.handle_scale_name_changed)
-        except RuntimeError:
-            pass
-
-    def _register_scale_listeners(self):
-        try:
-            self.song().add_root_note_listener(self.handle_root_note_changed)
-        except RuntimeError:
-            pass
-        try:
-            self.song().add_scale_name_listener(self.handle_scale_name_changed)
-        except RuntimeError:
-            pass
-
-    def handle_root_note_changed(self):
-        self._scale_selector.set_key(self.song().root_note, False, True)
-        self.update()
-
-    def handle_scale_name_changed(self):
-        self._scale_selector.set_modus(self._scale_selector._modus_names.index(self.song().scale_name), False, True)
-        self.update()
 
     # enabled
     def set_enabled(self, enabled):
@@ -670,40 +629,12 @@ class StepSequencerComponent(CompoundComponent):
 
     # DRUM_GROUP_DEVICE
     def _update_drum_group_device(self):
-        if self.song().view.selected_track != None:
-            track = self.song().view.selected_track
-            if track.devices != None and len(track.devices) > 0:
-                # device = track.devices[0]
-                device = self.find_drum_group_device(track)
-                if (
-                    device != None and device.can_have_drum_pads and device.has_drum_pads
-                ):  # Is drumrack and it have pads
-                    self._drum_group_device = device
-                else:
-                    self._drum_group_device = None
-            else:
-                self._drum_group_device = None
-        else:
-            self._drum_group_device = None
+        self._drum_group_device = drum_rack_of(self.song().view.selected_track)
 
     def _detect_scale_mode(self):
         if not self._is_locked:
             self._update_drum_group_device()
             self._scale_selector.set_drumrack(self._drum_group_device != None)
-
-    def find_drum_group_device(self, track):
-        device = find_if(
-            lambda d: d.type == Live.Device.DeviceType.instrument, track.devices
-        )  # find track's Instrument device
-        if device:
-            if device.can_have_drum_pads:  # device is a drum rack??
-                return device
-            elif device.can_have_chains:  # device is a rack??
-                return find_if(
-                    bool, map(self.find_drum_group_device, device.chains)
-                )  # recursive->returns the first drum rack item of the chain
-        else:
-            return None
 
     # SCALE Selector Button
     def _update_scale_selector_button(self):

@@ -1,17 +1,18 @@
-import Live
 from _Framework.ButtonElement import ButtonElement
 from _Framework.CompoundComponent import CompoundComponent
 from _Framework.SubjectSlot import subject_slot
-from _Framework.Util import clamp, find_if
+from _Framework.Util import clamp
 
+from .DrumRack import drum_rack_of
 from .ScaleComponent import CIRCLE_OF_FIFTHS, KEY_NAMES, MUSICAL_MODES, ScaleComponent
+from .SongScaleListener import SongScaleListener
 from .TrackControllerComponent import TrackControllerComponent
 
 KEY_MODE = 0
 SCALE_TYPE_MODE = 1
 
 
-class InstrumentControllerComponent(CompoundComponent):
+class InstrumentControllerComponent(SongScaleListener, CompoundComponent):
 
     def __init__(self, matrix, side_buttons, top_buttons, control_surface, note_repeat):
         super().__init__()
@@ -70,34 +71,6 @@ class InstrumentControllerComponent(CompoundComponent):
     def disconnect(self):
         self._remove_scale_listeners()
         super().disconnect()
-
-    def _remove_scale_listeners(self):
-        try:
-            self.song().remove_root_note_listener(self.handle_root_note_changed)
-        except RuntimeError:
-            pass
-        try:
-            self.song().remove_scale_name_listener(self.handle_scale_name_changed)
-        except RuntimeError:
-            pass
-
-    def _register_scale_listeners(self):
-        try:
-            self.song().add_root_note_listener(self.handle_root_note_changed)
-        except RuntimeError:
-            pass
-        try:
-            self.song().add_scale_name_listener(self.handle_scale_name_changed)
-        except RuntimeError:
-            pass
-
-    def handle_root_note_changed(self):
-        self._scales.set_key(self.song().root_note, False, True)
-        self.update()
-
-    def handle_scale_name_changed(self):
-        self._scales.set_modus(self._scales._modus_names.index(self.song().scale_name), False, True)
-        self.update()
 
     def set_enabled(self, enabled):
         CompoundComponent.set_enabled(self, enabled)
@@ -517,32 +490,12 @@ class InstrumentControllerComponent(CompoundComponent):
         if self._track_controller._implicit_arm:
             self.update()
 
+    def _followed_scale(self):
+        return self._scales
+
     # Set the drum rack instrument to _drum_group_device variable, if it exists
     def _get_drumrack_device(self):
-        if self._track_controller.selected_track != None:
-            track = self._track_controller.selected_track
-            if track.devices != None and len(track.devices) > 0:
-                # device = track.devices[0]
-                device = self.find_drum_group_device(track)
-                if device != None and device.can_have_drum_pads and device.has_drum_pads:
-                    self._drum_group_device = device
-                else:
-                    self._drum_group_device = None
-            else:
-                self._drum_group_device = None
-        else:
-            self._drum_group_device = None
-
-    # Return the drum device inside the track devices or inside the track chain or None if device is not a Drum
-    def find_drum_group_device(self, track):
-        device = find_if(lambda d: d.type == Live.Device.DeviceType.instrument, track.devices)
-        if device:
-            if device.can_have_drum_pads:
-                return device
-            elif device.can_have_chains:
-                return find_if(bool, map(self.find_drum_group_device, device.chains))
-        else:
-            return None
+        self._drum_group_device = drum_rack_of(self._track_controller.selected_track)
 
     def _update_matrix(self):
         if not self.is_enabled() or not self._matrix or self._scales.is_enabled():
