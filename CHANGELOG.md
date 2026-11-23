@@ -5,7 +5,7 @@ Versions are headed `## [x.y.z] - YYYY-MM-DD`; a release's notes are its section
 README). Releases before 2026 had no version numbers and are listed by date. The manual is on
 [w0ts.github.io/Launchpad95](https://w0ts.github.io/Launchpad95/).
 
-## [Unreleased]
+## [2.0.0] - 2026-11-23
 
 The project moves to [w0ts](https://w0ts.github.io/): repository [w0ts/Launchpad95](https://github.com/w0ts/Launchpad95),
 manual on [w0ts.github.io/Launchpad95](https://w0ts.github.io/Launchpad95/).
