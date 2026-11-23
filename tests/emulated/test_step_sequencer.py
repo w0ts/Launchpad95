@@ -244,3 +244,38 @@ def test_left_button_works_without_a_right_button(make_rig, model):
 	seq.set_left_button(seq._top_buttons[2])
 	seq.set_right_button(None)
 	seq._left_value(127, seq._left_button)
+
+
+def test_velocity_shift_changes_the_note_without_duplicating_it(seq_rig):
+	rig = seq_rig
+	rig.tap(0, 0)
+	before = clip(rig).note_tuples()[0][3]
+	rig.press_side(VELOCITY)
+	rig.tap(0, 0)
+	rig.release_side(VELOCITY)
+	notes = clip(rig).note_tuples()
+	assert len(notes) == 1
+	assert notes[0][3] != before
+
+
+def test_mute_shift_mutes_the_note_without_duplicating_it(seq_rig):
+	rig = seq_rig
+	rig.tap(0, 0)
+	rig.press_side(MUTE)
+	rig.tap(0, 0)
+	rig.release_side(MUTE)
+	notes = clip(rig).note_tuples()
+	assert len(notes) == 1
+	assert notes[0][4] is True
+
+
+def test_multinote_two_lines_per_note_rows_share_a_pitch(seq_rig):
+	rig = seq_rig
+	seq = stepseq(rig)
+	seq.set_mode(2, 2)  # multinote, 2 lines per note
+	rig.tap(0, 0)
+	rig.tap(0, 1)
+	rig.tap(0, 2)
+	pitches = [n[0] for n in sorted(clip(rig).note_tuples(), key=lambda n: n[1])]
+	keys = seq._note_editor._key_indexes
+	assert sorted(pitches) == sorted([keys[3], keys[3], keys[2]])

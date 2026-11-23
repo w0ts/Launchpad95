@@ -352,7 +352,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 				if self.is_multinote: # Calculate note pitch and time for notes 
 					time = self.quantization * (self._page * self.width * self.number_of_lines_per_note + x + (y % self.number_of_lines_per_note * self.width))
-					pitch = self._key_indexes[int(8 / self.number_of_lines_per_note - 1 - y / self.number_of_lines_per_note)]
+					pitch = self._key_indexes[8 // self.number_of_lines_per_note - 1 - y // self.number_of_lines_per_note]
 				else:
 					time = self.quantization * (self._page * self.width * self.number_of_lines_per_note + y * self.width + x)
 					pitch = self._key_indexes[0]
@@ -372,11 +372,13 @@ class NoteEditorComponent(ControlSurfaceComponent):
 							for index in range(len(self.velocity_map)):
 								if note[3] >= self.velocity_map[index]:
 									new_velocity_index = (index + 1) % len(self.velocity_map)
+							note_cache.remove(note)
 							note_cache.append([note[0], note[1], note[2], self.velocity_map[new_velocity_index], note[4]])  # (pitch, time, duration, velocity, mute state)
 						elif not self._is_mute_shifted:
 							note_cache.remove(note)
 						else:
 							# mute / un mute note.
+							note_cache.remove(note)
 							note_cache.append([note[0], note[1], note[2], note[3], not note[4]])  # (pitch, time, duration, velocity, mute state)
 						break
 				else:
