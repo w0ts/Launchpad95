@@ -11,7 +11,9 @@ class M4LInterface(ControlSurfaceComponent):
 		self.clear()
 
 	def disconnect(self):
-		self._updateM4L_listener = None
+		self._update_listener = None
+		self._updateML_listener = None
+		super(M4LInterface, self).disconnect()
 
 	def set_mode(self, mode):
 		self.clear()

@@ -575,6 +575,11 @@ class SpecialProSessionComponent(SpecialSessionComponent):
 		self._song.remove_clip_trigger_quantization_listener(self._on_clip_trigger_quantization_changed_in_live)
 		self._song.remove_midi_recording_quantization_listener(self._on_record_quantization_changed_in_live)
 		self.song().remove_session_record_listener(self._on_session_record_changed_in_live)
+		self._song.remove_metronome_listener(self._on_metronome_status_changed)
+		for set_button in (self._set_undo_button, self._set_shift_button, self._set_click_button,
+				self._set_quantize_button, self._set_double_button, self._set_delete_button,
+				self._set_duplicate_button, self._set_record_button):
+			set_button(None)
 		self._end_undo_step_task.kill()
 		self._end_undo_step_task = None
 		self._record_quantization_on = False
@@ -594,6 +599,7 @@ class SpecialProSessionComponent(SpecialSessionComponent):
 		self._quantize_button = None
 		self._record_button = None
 		self._tap_button = None
+		super(SpecialProSessionComponent, self).disconnect()
 		
 	def _is_shifting(self):
 		return self._shift_pressed

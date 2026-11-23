@@ -81,6 +81,10 @@ class InstrumentControllerComponent(CompoundComponent):
 		self._note_repeat_selector = False
 		self._note_repeat.set_enabled(False)
 	
+	def disconnect(self):
+		self._remove_scale_listeners()
+		super(InstrumentControllerComponent, self).disconnect()
+
 	def _remove_scale_listeners(self):
 		try:
 			self.song().remove_root_note_listener(self.handle_root_note_changed)

@@ -80,6 +80,11 @@ class StepSequencerComponent(CompoundComponent):
         # self.on_clip_slot_changed()
 
     def disconnect(self):
+        self._remove_scale_listeners()
+        if self._clip_slot != None and self._clip_slot.has_clip_has_listener(self.on_clip_slot_has_clip_changed):
+            self._clip_slot.remove_has_clip_listener(self.on_clip_slot_has_clip_changed)
+        self._clip_slot = None
+        self._remove_clip_listeners(self._clip)
         self._clip = None
 
         self._lock_button = None
@@ -94,6 +99,20 @@ class StepSequencerComponent(CompoundComponent):
         self._note_selector = None
         self._scale_selector = None
         self._track_controller = None
+        super(StepSequencerComponent, self).disconnect()
+
+    def _remove_clip_listeners(self, clip):
+        if clip != None and clip.is_midi_clip:
+            if clip.notes_has_listener(self._on_notes_changed):
+                clip.remove_notes_listener(self._on_notes_changed)
+            if clip.playing_status_has_listener(self._on_playing_status_changed):
+                clip.remove_playing_status_listener(self._on_playing_status_changed)
+            if clip.playing_position_has_listener(self._on_playing_position_changed):
+                clip.remove_playing_position_listener(self._on_playing_position_changed)
+            if clip.loop_start_has_listener(self._on_loop_changed):
+                clip.remove_loop_start_listener(self._on_loop_changed)
+            if clip.loop_end_has_listener(self._on_loop_changed):
+                clip.remove_loop_end_listener(self._on_loop_changed)
 
 # SET FUNCTIONS
     def _set_mode_function(self): #Change the resolution of the sequencer
@@ -522,17 +541,7 @@ class StepSequencerComponent(CompoundComponent):
         if self._clip_slot != None and self._clip_slot.has_clip and self._clip_slot.clip != None and self._clip_slot.clip.is_midi_clip:
             if self._clip == None or self._clip != self._clip_slot.clip:
                 # unlink
-                if self._clip != None and self._clip.is_midi_clip:
-                    if self._clip.notes_has_listener(self._on_notes_changed):
-                        self._clip.remove_notes_listener(self._on_notes_changed)
-                    if self._clip.playing_status_has_listener(self._on_playing_status_changed):
-                        self._clip.remove_playing_status_listener(self._on_playing_status_changed)
-                    if self._clip.playing_position_has_listener(self._on_playing_position_changed):
-                        self._clip.remove_playing_position_listener(self._on_playing_position_changed)
-                    if self._clip.loop_start_has_listener(self._on_loop_changed):
-                        self._clip.remove_loop_start_listener(self._on_loop_changed)
-                    if self._clip.loop_end_has_listener(self._on_loop_changed):
-                        self._clip.remove_loop_end_listener(self._on_loop_changed)
+                self._remove_clip_listeners(self._clip)
               
 
                 # link new clip
@@ -556,17 +565,7 @@ class StepSequencerComponent(CompoundComponent):
                 
         else:
             # unlink
-            if self._clip != None:
-                if self._clip.notes_has_listener(self._on_notes_changed):
-                    self._clip.remove_notes_listener(self._on_notes_changed)
-                if self._clip.playing_status_has_listener(self._on_playing_status_changed):
-                    self._clip.remove_playing_status_listener(self._on_playing_status_changed)
-                if self._clip.playing_position_has_listener(self._on_playing_position_changed):
-                    self._clip.remove_playing_position_listener(self._on_playing_position_changed)
-                if self._clip.loop_start_has_listener(self._on_loop_changed):
-                    self._clip.remove_loop_start_listener(self._on_loop_changed)
-                if self._clip.loop_end_has_listener(self._on_loop_changed):
-                    self._clip.remove_loop_end_listener(self._on_loop_changed)
+            self._remove_clip_listeners(self._clip)
 
             # publish
             self._clip = None
