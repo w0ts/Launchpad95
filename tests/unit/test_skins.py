@@ -2,6 +2,7 @@
 import ast
 import glob
 import os
+import re
 import sys
 
 import pytest
@@ -79,13 +80,18 @@ def has_key(skin, key):
 
 
 
-# Missing keys that are known bugs, each with its own strict xfail test below. Once a bug
+# Missing keys (file and key, no line) that are known bugs, each with its own strict xfail test below. Once a bug
 # is fixed its xfail test passes (strict -> failure): remove the entry here and the mark.
 KNOWN_MISSING = {
-	"StepSequencerComponent.py:854 DefaultButton.Disable",
-	"StepSequencerComponent2.py:856 DefaultButton.Disaled",
+	"StepSequencerComponent.py DefaultButton.Disable",
+	"StepSequencerComponent2.py DefaultButton.Disaled",
 }
 KNOWN_MISSING_MK1 = {"Device.CustomSlider%d.%s" % (column, part) for column in (3, 6) for part in ("Third", "Half")}
+
+
+def without_lines(missing):
+	"""'File.py:123 Key' -> 'File.py Key', so known entries survive edits elsewhere in the file."""
+	return {re.sub(r":\d+ ", " ", entry, count=1) for entry in missing}
 
 
 def missing_literal_keys(skin):
@@ -107,7 +113,7 @@ def test_the_scan_finds_skin_keys():
 
 
 def test_literal_skin_keys_exist(skin):
-	assert missing_literal_keys(skin) - KNOWN_MISSING == set()
+	assert without_lines(missing_literal_keys(skin)) - KNOWN_MISSING == set()
 
 
 def test_built_skin_keys_exist(skin, framework):
@@ -117,12 +123,12 @@ def test_built_skin_keys_exist(skin, framework):
 
 @pytest.mark.xfail(strict=True, reason="bug: StepSequencerComponent.py:854 uses skin key 'DefaultButton.Disable' (typo of Disabled)")
 def test_step_sequencer_lock_button_key(skin):
-	assert "StepSequencerComponent.py:854 DefaultButton.Disable" not in missing_literal_keys(skin)
+	assert "StepSequencerComponent.py DefaultButton.Disable" not in without_lines(missing_literal_keys(skin))
 
 
 @pytest.mark.xfail(strict=True, reason="bug: StepSequencerComponent2.py:856 uses skin key 'DefaultButton.Disaled' (typo of Disabled)")
 def test_melodic_sequencer_lock_button_key(skin):
-	assert "StepSequencerComponent2.py:856 DefaultButton.Disaled" not in missing_literal_keys(skin)
+	assert "StepSequencerComponent2.py DefaultButton.Disaled" not in without_lines(missing_literal_keys(skin))
 
 
 @pytest.mark.xfail(strict=True, reason="bug: SkinMK1.py Device.CustomSlider3 and CustomSlider6 lack Third/Half (used when USE_CUSTOM_DEVICE_CONTROL_COLORS)")
