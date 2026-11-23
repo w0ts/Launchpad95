@@ -3,7 +3,7 @@ import importlib.util
 import os
 from collections import namedtuple
 
-_PATH = os.path.join(os.path.dirname(__file__), "..", "ClipNotes.py")
+_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ClipNotes.py")
 _spec = importlib.util.spec_from_file_location("ClipNotes", _PATH)
 ClipNotes = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(ClipNotes)
