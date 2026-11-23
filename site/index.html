@@ -1,0 +1,528 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Launchpad95 · Manual</title>
+<meta name="description" content="Launchpad95: an Ableton Live control surface script for Novation Launchpads, with an instrument mode, scales, two step sequencers and a device controller.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23171716'/%3E%3Cg fill='%23e5534b'%3E%3Crect x='5' y='5' width='6' height='6' rx='1'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1'/%3E%3Crect x='21' y='5' width='6' height='6' rx='1'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1'/%3E%3Crect x='21' y='13' width='6' height='6' rx='1'/%3E%3Crect x='5' y='21' width='6' height='6' rx='1'/%3E%3Crect x='13' y='21' width='6' height='6' rx='1'/%3E%3Crect x='21' y='21' width='6' height='6' rx='1'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://w0ts.github.io/site-style/common.css">
+<style>
+:root { --accent: #e5534b; --accent-text-l: #b93029; --accent-text-d: #ec6b63; }
+/* Launchpad renders: <figure class="lp"> = the device (.lp-dev: 9 columns, 8 pads and the round scene button per row,
+   the round top buttons first) and its notes (figcaption dl.lp-notes). The device is dark in both modes, as the hardware.
+   LED colours: .green .red .amber .mandarin; a pad without one is off. */
+.lp { margin: 14px 0; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-start; }
+.lp-dev { container-type: inline-size; flex: 0 1 460px; width: 100%; max-width: 460px; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 5px; padding: 12px; background: #262624; border: 1px solid #0d0d0c; border-radius: 12px; box-shadow: 0 2px 8px rgb(0 0 0 / .25); }
+.lp-dev > span { aspect-ratio: 1; min-width: 0; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden;
+  overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; padding: 1px; border-radius: 4px; background: #3b3b38; color: #d6d5cf;
+  font: 600 clamp(6px, 2cqi, 10px)/1.05 var(--font-ui); }
+.lp-dev > .round { border-radius: 50%; padding: 3px; }
+.lp-dev > .gap { background: none; }
+.lp-dev > .green { background: #4fd24a; color: #171716; box-shadow: 0 0 6px rgb(79 210 74 / .5); }
+.lp-dev > .red { background: #ff4a3d; color: #171716; box-shadow: 0 0 6px rgb(255 74 61 / .5); }
+.lp-dev > .amber { background: #ffab2e; color: #171716; box-shadow: 0 0 6px rgb(255 171 46 / .5); }
+.lp-dev > .mandarin { background: #ff7b1c; color: #171716; box-shadow: 0 0 6px rgb(255 123 28 / .5); }
+.lp figcaption { flex: 1 1 260px; min-width: 0; }
+.lp-notes { margin: 0; display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 4px 12px; font-size: 14px; }
+.lp-notes dt { font-weight: 600; } .lp-notes dd { margin: 0; } .lp-notes ul { margin: 0; padding-left: 18px; } .lp-notes li { margin: 0; }
+@media (max-width: 480px) { .lp-dev { gap: 3px; padding: 8px; border-radius: 10px; } .lp-notes { grid-template-columns: 1fr; gap: 0; } .lp-notes dd { margin-bottom: 6px; } }
+.legend i.green { background: #4fd24a; } .legend i.red { background: #ff4a3d; } .legend i.amber { background: #ffab2e; } .legend i.mandarin { background: #ff7b1c; } .legend i.off { background: #3b3b38; }
+main code { overflow-wrap: anywhere; }
+nav.toc ul { columns: 2 220px; margin: 0; } nav.toc li { margin: 2px 0; break-inside: avoid; }
+@media print { .lp { break-inside: avoid; } .lp-dev, .legend i { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+<script src="https://w0ts.github.io/site-style/switcher.js" defer></script>
+</head>
+<body>
+<main>
+  <header class="site">
+    <div class="titlebar"><h1><a href="https://w0ts.github.io/">w0ts</a> / Launchpad95</h1></div>
+    <nav class="site on-bar" aria-label="Links"><a href="https://github.com/w0ts/Launchpad95" aria-label="Launchpad95 on GitHub" title="Launchpad95 on GitHub"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav>
+  </header>
+
+  <section>
+    <h2>An improved Launchpad script for Ableton Live</h2>
+    <p>Launchpad95 is a control surface script for the Novation Launchpads in Ableton Live. It started as a modified version of Live's own Launchpad scripts and keeps all they do, then adds a <b>step sequencer</b> to edit MIDI clips (one for drums, one melodic), an <b>Instrument Controller</b> with scales, a <b>Device Controller</b> and an improved <b>Pro Session</b> mode.</p>
+    <p>It needs no external tool such as Max for Live: it is a plain Live control surface script, written in Python. Free, GPL-3.0.</p>
+    <div class="buttons"><a class="button" href="https://github.com/w0ts/Launchpad95/releases/latest/download/Launchpad95.zip">Download Launchpad95.zip</a><a class="button quiet" href="https://github.com/w0ts/Launchpad95">Source on GitHub</a><a class="button quiet" href="Launchpad95_manual_FR.pdf">Manuel en français (PDF)</a></div>
+    <p>Live 11 or later. For Live 9 and 10, use the <a href="https://github.com/w0ts/Launchpad95/releases/tag/legacy-live9-10">archived release</a>. What changed in each version: <a href="https://github.com/w0ts/Launchpad95/blob/master/CHANGELOG.md">the change log</a>.</p>
+  </section>
+
+  <nav class="toc card" aria-label="Contents">
+    <h2>Contents</h2>
+    <ul>
+      <li><a href="#install">Installation</a></li>
+      <li><a href="#manual">User manual</a></li>
+      <li><a href="#instrument">Instrument Controller mode</a></li>
+      <li><a href="#scale">Scale edition mode</a></li>
+      <li><a href="#quick-scale">Quick scale modes and note repeat</a></li>
+      <li><a href="#drum-seq">Drum step sequencer</a></li>
+      <li><a href="#melodic-seq">Melodic step sequencer</a></li>
+      <li><a href="#device">Device Controller mode</a></li>
+      <li><a href="#session">Session mode</a></li>
+      <li><a href="#toc_3_session_pro">Pro Session mode</a></li>
+      <li><a href="#user-modes">User 1 and User 2 modes</a></li>
+      <li><a href="#mixer">Mixer mode</a></li>
+      <li><a href="#osd">Max for Live on-screen display</a></li>
+      <li><a href="#faq">F.A.Q.</a></li>
+      <li><a href="#issues">Known issues</a></li>
+      <li><a href="#changes">Changes</a></li>
+      <li><a href="#source">Source, credits and contact</a></li>
+    </ul>
+  </nav>
+
+  <section id="install">
+    <h2>Installation</h2>
+    <h3>Supported hardware and software</h3>
+    <p><b>Ableton Live 11 or later</b> (Live 11 and 12; Mac or Windows; Intro, Standard or Suite). Launchpad95 now uses the note API that Live 11 introduced, so it no longer runs on Live 9 or 10: for those, download the <a href="https://github.com/w0ts/Launchpad95/releases/tag/legacy-live9-10">archived Live 9/10 release</a>.</p>
+    <p>Supported Launchpads:</p>
+    <ul>
+      <li>Launchpad (the original, MK1)</li>
+      <li>Launchpad S</li>
+      <li>Launchpad Mini</li>
+      <li>Launchpad MK2 (RGB)</li>
+      <li>Launchpad Mini MK2 (RGB)</li>
+      <li>Launchpad Mini MK3 (RGB)</li>
+      <li>Launchpad X (RGB)</li>
+      <li><s>Launchpad Pro</s>: see <a href="https://w0ts.github.io/Launchpad_Pro95/">Launchpad Pro95</a></li>
+      <li><s>Launchpad Pro MK2</s> is not supported</li>
+    </ul>
+    <h3>Setup</h3>
+    <ol class="steps">
+      <li>Download <b><a href="https://github.com/w0ts/Launchpad95/releases/latest/download/Launchpad95.zip">Launchpad95.zip</a></b> and unzip it.</li>
+      <li>Copy the <b>Launchpad95</b> folder into your Live <b>User Library</b>, in a folder named <b>Remote Scripts</b> (create it if needed). In Live's browser, right-click the User Library and choose <i>Show in Finder</i> / <i>Show in Explorer</i> to find it. The <code>.py</code> files must be directly inside <code>User Library/Remote Scripts/Launchpad95/</code>.
+        <img src="setup-folders.png" alt="The User Library in Finder: Remote Scripts, then Launchpad95 with its .py files" width="701" height="227" class="shot"></li>
+      <li>Plug in your Launchpad and start Live (restart it if it was running, Live reads the scripts at start).</li>
+      <li>Open <b>Settings</b> (Preferences on older Lives) → <b>Link, Tempo &amp; MIDI</b>. In a free Control Surface slot choose <b>Launchpad95</b>, and as Input and Output choose your Launchpad.
+        <img src="setup-script.png" alt="Control Surface Launchpad95, Input and Output Launchpad X (LPX MIDI)" width="368" height="30" class="shot">
+        <p>The Launchpad X and Mini MK3 show two ports each: choose the <b>MIDI</b> port for both Input and Output, <b>LPX MIDI</b> on the Launchpad X and <b>LPMiniMK3 MIDI</b> on the Mini MK3, not the DAW port.</p></li>
+      <li>In the MIDI Ports list below, turn on <b>Track</b>, <b>Sync</b> and <b>Remote</b> for the Launchpad ports used by Launchpad95 (Track is needed for the note feedback of the Instrument Controller).
+        <img src="setup-ports.png" alt="MIDI Ports: Track, Sync and Remote on for the Launchpad input and output" width="372" height="107" class="shot"></li>
+      <li>Live Suite users: the <code>M4LDevice</code> folder holds an on-screen display, a Max for Live device that shows what you would see on a Push screen (see <a href="#osd">below</a>).</li>
+    </ol>
+  </section>
+
+  <section id="manual">
+    <h2>User manual</h2>
+    <p>Four modes are added on top of the existing modes: the <b>Drum Step Sequencer</b> to edit MIDI clips, a <b>Melodic Step Sequencer</b>, the <b>Device Controller</b> to edit any parameter of any instrument, effect or device on any track of your set, and finally an <b>Instrument Mode</b> providing a tighter integration with Live.</p>
+    <p>The manual is also available <a href="Launchpad95_manual_FR.pdf">in French as a PDF</a>, thanks to François Lehérissier (it describes an older version).</p>
+    <p>The pictures below show the Launchpad with its LEDs. Hover a button for its description; the notes beside each picture say the same.</p>
+    <div class="legend" aria-label="LED colours"><span><i class="green"></i>green</span><span><i class="red"></i>red</span><span><i class="amber"></i>amber</span><span><i class="mandarin"></i>mandarin (orange)</span><span><i class="off"></i>off</span></div>
+  </section>
+
+  <section id="instrument">
+    <h2>Instrument Controller mode</h2>
+    <p>Instrument Mode replaces the classic User Mode 1. To activate the Instrument Controller, press the User Mode 1 button (the mode button stays amber). Press User Mode 1 once again: the button turns green, activating the Device Controller. If you enabled the plain User Mode 1 in <code>Settings.py</code>, pressing once more turns the button red and gives you that mode.</p>
+    <p>The top up/down navigation buttons navigate scenes, while the left/right buttons navigate tracks. The scene buttons control the currently selected track and clip: arm, solo, record, play, stop, etc. (see below).</p>
+    <p>The matrix of buttons acts as a MIDI keyboard, with a drum rack layout and a melodic mode. Melodic mode lets you select the root note, the type of scale (major, minor, etc.) and the octave you play in.</p>
+    <p>Most of the scene buttons have an alternate function when you hold them long (0.5 s):</p>
+    <ul>
+      <li><b>undo</b>: a long press performs a redo!</li>
+      <li><b>stop</b>: a long press DELETES the selected clip. No worries, this is undoable!</li>
+      <li><b>solo</b>: a long press on solo enables/disables the selected track.</li>
+      <li><b>arm</b>: holding arm for more than 0.5 s toggles Live's metronome. A very long press (2 s) alternates between automatic arming of the track and manual track arming. The colour of the button reflects the selected mode. This is really useful if more than one controller or person plays with Live.</li>
+    </ul>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round green">prev scene</span><span class="round green">next scene</span><span class="round green">prev track</span><span class="round green">next track</span><span class="round">Session mode</span><span class="round amber">user 1 Inst.</span><span class="round">user 2 step</span><span class="round">mixer mode</span><span class="gap"></span>
+    <span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad amber"></span><span class="round amber" title="enter scale edition mode">scale</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="round amber" title="undo. long press to redo">undo</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="round green">octave up</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="round green">octave down</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="round red" title="start/stop selected clip. long press to delete">start stop</span>
+    <span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="round red" title="lock to track">lock</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="round amber" title="solo current track">solo</span>
+    <span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad amber"></span><span class="round red" title="session record">overdub</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>scale</dt><dd>enter scale edition mode</dd><dt>undo</dt><dd>undo. long press to redo</dd><dt>start stop</dt><dd>start/stop selected clip. long press to delete</dd><dt>lock</dt><dd>lock to track</dd><dt>solo</dt><dd>solo current track</dd><dt>overdub</dt><dd>session record</dd></dl></figcaption>
+</figure>
+  </section>
+
+  <section id="scale">
+    <h2>Scale edition mode</h2>
+    <p>To enter scale edition mode, press (and keep pressed) the 1st scene button in Instrument mode. Scales and their order are taken from Live itself. The selected key and scale are synchronized between the Launchpad and Live's clips.</p>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round green">prev scene</span><span class="round green">next scene</span><span class="round green">prev track</span><span class="round green">next track</span><span class="round">Session mode</span><span class="round amber">user 1 Inst.</span><span class="round">user 2 step</span><span class="round">mixer mode</span><span class="gap"></span>
+    <span class="pad amber">absolute root</span><span class="pad amber" title="orientation">orient.</span><span class="pad red">chromatic guitar</span><span class="pad red">diatonic sequent</span><span class="pad red">diatonic 3rd</span><span class="pad red">diatonic 4th</span><span class="pad red">chromatic</span><span class="pad red">drumrack</span><span class="round amber" title="enter scale edition mode">scale</span>
+    <span class="pad amber">C#</span><span class="pad amber">D#</span><span class="pad red">relative scale</span><span class="pad amber">F#</span><span class="pad amber">G#</span><span class="pad amber">A#</span><span class="pad red">5th left</span><span class="pad green">quick scale mode</span><span class="round amber" title="undo. long press to redo">undo</span>
+    <span class="pad amber">C</span><span class="pad amber">D</span><span class="pad amber">E</span><span class="pad amber">F</span><span class="pad amber">G</span><span class="pad amber">A</span><span class="pad amber">B</span><span class="pad red">5th right</span><span class="round green">octave up</span>
+    <span class="pad red" title="octave -2">-2</span><span class="pad red" title="octave -1">-1</span><span class="pad red" title="octave 0">0</span><span class="pad red" title="octave 1">1</span><span class="pad red" title="octave 2">2</span><span class="pad red" title="octave 3">3</span><span class="pad red" title="octave 4">4</span><span class="pad red" title="octave 5">5</span><span class="round green">octave down</span>
+    <span class="pad green">Major</span><span class="pad green">Minor</span><span class="pad green">Dorian</span><span class="pad green" title="Mixolydian">Mixolyd.</span><span class="pad green">Lydian</span><span class="pad green">Phrygian</span><span class="pad green">Locrian</span><span class="pad green" title="Diminished">Diminish.</span><span class="round red" title="start/stop selected clip. long press to delete">start stop</span>
+    <span class="pad green">Whole-half</span><span class="pad green">Whole Tone</span><span class="pad green">Minor Blues</span><span class="pad green" title="Minor Pentatonic">Minor Penta.</span><span class="pad green" title="Major Pentatonic">Major Penta.</span><span class="pad green">Harmonic Minor</span><span class="pad green">Melodic Minor</span><span class="pad green">Super Locrian</span><span class="round red" title="lock to track">lock</span>
+    <span class="pad green">Bhairav</span><span class="pad green" title="Hungarian Minor">Hunga. Minor</span><span class="pad green">Minor Gypsy</span><span class="pad green">Hirojoshi</span><span class="pad green">In-Sen</span><span class="pad green">Iwato</span><span class="pad green">Kumoi</span><span class="pad green">Pelog</span><span class="round amber" title="solo current track">solo</span>
+    <span class="pad green">Spanish</span><span class="pad green">IonEol</span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red" title="session record">overdub</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>scale</dt><dd>enter scale edition mode</dd><dt>undo</dt><dd>undo. long press to redo</dd><dt>start stop</dt><dd>start/stop selected clip. long press to delete</dd><dt>lock</dt><dd>lock to track</dd><dt>solo</dt><dd>solo current track</dd><dt>overdub</dt><dd>session record</dd></dl></figcaption>
+</figure>
+    <dl class="terms">
+      <dt>Orient.</dt>
+      <dd>Changes the orientation of the instrument mode from vertical to horizontal.</dd>
+      <dt>Absolute root</dt>
+      <dd>The bottom left button is always the root note of the selected scale.</dd>
+      <dt>Chromatic guitar</dt>
+      <dd>Pretty much like the regular chromatic mode, except the top four rows are all shifted by one semitone, so that the bottom 6 rows emulate standard guitar tuning.</dd>
+      <dt>Diatonic sequent</dt>
+      <dd>Each row is an octave, so the first and last button of each row are the root note.</dd>
+      <dt>Diatonic 3rd</dt>
+      <dd>Moving from one button to the next one up moves a 3rd in the scale. 3rds are very practical to play chords vertically.</dd>
+      <dt>Diatonic 4th</dt>
+      <dd>Moving from one button to the next one up moves a 4th in the scale. 4th is the default mode, also on Push.</dd>
+      <dt>Chromatic</dt>
+      <dd>The button to the left or right of a button is a semitone lower or higher.</dd>
+      <dt>C, C#, D, D#, E, F, F#, G, G#, A, A#, B</dt>
+      <dd>Selects the root note of the scale.</dd>
+      <dt>Relative scale</dt>
+      <dd>Changes the selected scale to its relative scale, e.g. from C major to A minor and vice versa.</dd>
+      <dt>5th left</dt>
+      <dd>Changes the selected scale to the previous one in the circle of fifths (a 5th lower).</dd>
+      <dt>5th right</dt>
+      <dd>Changes the selected scale to the next one in the circle of fifths (a 5th higher).</dd>
+      <dt>Quick scale mode</dt>
+      <dd>Replaces the top 2 rows of the instrument mode with the quick scale modes (see below).</dd>
+      <dt>-2, -1, 0, 1, 2, 3, 4, 5</dt>
+      <dd>Changes the octave of the instrument mode.</dd>
+    </dl>
+  </section>
+
+  <section id="quick-scale">
+    <h2>Quick scale modes</h2>
+    <p>If quick scale is on (the last button on the right of the 2nd row in scale edition mode), the two top rows of the Launchpad let you change the scale quickly. The pictures show those two rows. The last button of the first row switches between root note selection and mode selection.</p>
+    <h3>Root note</h3>
+    <p>In this mode you select the root note of your scale. Press the selected root again to alternate quickly between minor and major.</p>
+<figure class="lp short">
+  <div class="lp-dev" style="--rows:2">
+    <span class="pad amber">C#</span><span class="pad amber">D#</span><span class="pad red">relative scale</span><span class="pad amber">F#</span><span class="pad amber">G#</span><span class="pad amber">A#</span><span class="pad red">5th left</span><span class="pad red">scale / mode toggle</span><span class="round amber" title="enter scale edition mode">scale</span>
+    <span class="pad amber">C</span><span class="pad amber">D</span><span class="pad amber">E</span><span class="pad amber">F</span><span class="pad amber">G</span><span class="pad amber">A</span><span class="pad amber">B</span><span class="pad red">5th right</span><span class="round amber" title="undo. long press to redo">undo</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>scale</dt><dd>enter scale edition mode</dd><dt>undo</dt><dd>undo. long press to redo</dd></dl></figcaption>
+</figure>
+    <h3>Modes</h3>
+    <p>In this mode you select the mode of your scale.</p>
+<figure class="lp short">
+  <div class="lp-dev" style="--rows:2">
+    <span class="pad amber">Major</span><span class="pad amber">Minor</span><span class="pad amber">Dorian</span><span class="pad amber" title="Mixolydian">Mixolyd.</span><span class="pad amber">Lydian</span><span class="pad amber">Phrygian</span><span class="pad amber">Locrian</span><span class="pad red">scale / mode toggle</span><span class="round amber" title="enter scale edition mode">scale</span>
+    <span class="pad amber" title="Diminished">Diminish.</span><span class="pad amber">Minor Blues</span><span class="pad amber">Harmonic Minor</span><span class="pad amber">Melodic Minor</span><span class="pad amber">Super Locrian</span><span class="pad amber" title="Hungarian Minor">Hunga. Minor</span><span class="pad amber">Minor Gypsy</span><span class="pad amber">Spanish</span><span class="round amber" title="undo. long press to redo">undo</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>scale</dt><dd>enter scale edition mode</dd><dt>undo</dt><dd>undo. long press to redo</dd></dl></figcaption>
+</figure>
+    <h3>Note repeat</h3>
+    <p>In this mode you turn note repeat on and set it up.</p>
+<figure class="lp short">
+  <div class="lp-dev" style="--rows:2">
+    <span class="pad green">Swing +2.5%</span><span class="pad green">Swing -2.5%</span><span class="pad amber">Swing 0%</span><span class="pad amber">Swing 25%</span><span class="pad amber">Swing 50%</span><span class="pad amber">Swing 75%</span><span class="pad red">Repeat On/Off</span><span class="pad green">Scale / mode toggle</span><span class="round amber" title="enter scale edition mode">scale</span>
+    <span class="pad red">1/4</span><span class="pad red">1/4T</span><span class="pad red">1/8</span><span class="pad red">1/8T</span><span class="pad red">1/16</span><span class="pad red">1/16T</span><span class="pad red">1/32</span><span class="pad red">1/32T</span><span class="round amber" title="undo. long press to redo">undo</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>scale</dt><dd>enter scale edition mode</dd><dt>undo</dt><dd>undo. long press to redo</dd></dl></figcaption>
+</figure>
+  </section>
+
+  <section id="drum-seq">
+    <h2>Drum step sequencer</h2>
+    <p>To activate the Drum Step Sequencer, select a MIDI clip in the clip view, then press the User Mode 2 button once (normal mode). Pressing User Mode 2 once more opens the Melodic Step Sequencer.</p>
+    <p>This sequencer has two sub modes, detailed below: combined and multinote. (The second step sequencer, the melodic one, is described further down.)</p>
+    <p>A playback indicator scrolls through the grid in amber to show the playing position as the clip plays. It is only an overlay: it does not change what the buttons do.</p>
+    <p>Colour codes:</p>
+    <ul>
+      <li>Normal notes are green, brighter or dimmer with their velocity.</li>
+      <li>Muted notes are red.</li>
+      <li>Notes being played flash red.</li>
+      <li>Notes being played outside the displayed block of the clip also flash red.</li>
+    </ul>
+    <p>Other information is shown in orange:</p>
+    <ul>
+      <li>Note markers show which row is which note: the root note of the selected scale is marked with three orange buttons lit on the left; the other notes of the scale with one orange button lit on the left-most column.</li>
+      <li>While you scroll left and right along the clip, a vertical bar shows where you are in the clip.</li>
+    </ul>
+    <p>The pictures summarise the buttons; hover a button for its description.</p>
+    <p>The step sequencer starts in combined mode. The 4th scene button toggles between combined mode and multinote mode. Multinote mode works like the step sequencer of Launchpad85, while combined mode is closer to the step sequencer of Push.</p>
+
+    <h3>Combined mode</h3>
+    <p>The bottom left area selects the note being edited in the note editor at the top.</p>
+    <p>The bottom right area selects the part of the clip being displayed (a single press) and edited (a double press, or one button after the other).</p>
+    <p>Some buttons have combined functions:</p>
+    <ul>
+      <li><b>Lock</b> (2nd scene button): press long to switch between clip lock and "play clip on locked track" mode.
+        <ul><li>yellow: track lock mode. The step sequencer is locked to the current track and follows the playing clip on this track.</li><li>red: the step sequencer is locked to the current clip.</li></ul></li>
+      <li><b>Quantize</b> (3rd scene button): press long to duplicate the clip into a new clip.</li>
+      <li><b>Mute</b> (last scene button):
+        <ul><li>hold mute and press a note to mute it</li><li>hold mute and press a note in the bottom left quadrant to mute it</li><li>hold mute and select a loop range in the loop selector to delete it</li></ul></li>
+      <li><b>Velocity</b> (7th scene button):
+        <ul><li>hold velocity and press a note to change its velocity</li><li>hold velocity and press a note in the note selector to hear a preview of the sound</li><li>hold velocity and select a loop range in the loop selector to extend the clip's content to the newly selected length</li></ul></li>
+      <li><b>Velocity and mute</b> (7th and last scene buttons): hold both and select a loop range in the loop selector to mute that time selection.</li>
+    </ul>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round green">prev scene</span><span class="round green">next scene</span><span class="round green">prev track</span><span class="round green">next track</span><span class="round">Session mode</span><span class="round">user 1 device</span><span class="round amber" title="cycle thru StepSequencers and User Mode 2">user 2 step</span><span class="round">mixer mode</span><span class="gap"></span>
+    <span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="Display Scale Selection Overlay">scale</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red" title="lock step seq to current clip (very useful !). long press to lock on current track only">lock</span>
+    <span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="cycle thru available quantisations. long press to duplicate clip and select new">quant.</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="switches between combined and multinote modes">modes</span>
+    <span class="pad amber"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="round green" title="scroll up (notes)">up</span>
+    <span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green" title="scroll down (notes)">down</span>
+    <span class="pad amber"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green" title="Velocity and Velocity Shift : Press shortly to cycle thru available velocities (used for creating note while pressing a button on the 8*8 matrix). hold and press a note in the matrix to alter its velocity">velocity</span>
+    <span class="pad amber"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red" title="hold and press a note in the matrix to (un)mute it. / hold and press a note in the note selector to mute a lane / hold+nav keys to scroll up/down one octave">mute</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>user 2 step</dt><dd>cycle thru StepSequencers and User Mode 2</dd><dt>scale</dt><dd>Display Scale Selection Overlay</dd><dt>lock</dt><dd>lock step seq to current clip (very useful !). long press to lock on current track only</dd><dt>quant.</dt><dd>cycle thru available quantisations. long press to duplicate clip and select new</dd><dt>modes</dt><dd>switches between combined and multinote modes</dd><dt>up</dt><dd>scroll up (notes)</dd><dt>down</dt><dd>scroll down (notes)</dd><dt>velocity</dt><dd><ul><li>cycle thru velocities and velocity shift notes</li><li>Velocity and Velocity Shift : Press shortly to cycle thru available velocities (used for creating note while pressing a button on the 8*8 matrix). hold and press a note in the matrix to alter its velocity</li></ul></dd><dt>mute</dt><dd><ul><li>hold and press a note in the matrix to (un)mute it.</li><li>hold and press a note in the note selector to mute a lane</li><li>hold+nav keys to scroll up/down one octave</li></ul></dd></dl></figcaption>
+</figure>
+
+    <h3>Multinote mode</h3>
+    <p>To activate this mode, press the 4th scene button in combined mode (press it again to go back to combined mode).</p>
+    <p>This mode uses the grid as an 8 × 8 matrix, one MIDI note per row. It follows the selected scale. The left and right arrows move left and right in the clip.</p>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round green" title="select prev scene">prev scene</span><span class="round green" title="select next scene">next scene</span><span class="round green" title="select prev clip page">prev page</span><span class="round green" title="select next clip page">next page</span><span class="round">Session mode</span><span class="round">user 1 device</span><span class="round amber" title="cycle thru StepSequencers and User Mode 2">user 2 step</span><span class="round">mixer mode</span><span class="gap"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="Display Scale Selection Overlay">scale</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red" title="lock step seq to current clip (very useful !)">lock</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="cycle thru available quantisations">quant.</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="switches between combined and multinote modes">modes</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad red"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="round green" title="scroll up (notes)">up</span>
+    <span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="round green" title="scroll down (notes)">down</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green" title="Velocity and Velocity Shift : Press shortly to cycle thru available velocities (used for creating note while pressing a button on the 8*8 matrix). Hold and press a note in the matrix to alter its velocity">velocity</span>
+    <span class="pad green"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="round red" title="hold and press a note in the matrix to (un)mute it. / hold and press a note in the note selector to mute a lane / hold+nav keys to scroll up/down one octave">mute</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>prev scene</dt><dd>select prev scene</dd><dt>next scene</dt><dd>select next scene</dd><dt>prev page</dt><dd>select prev clip page</dd><dt>next page</dt><dd>select next clip page</dd><dt>user 2 step</dt><dd>cycle thru StepSequencers and User Mode 2</dd><dt>scale</dt><dd>Display Scale Selection Overlay</dd><dt>lock</dt><dd>lock step seq to current clip (very useful !)</dd><dt>quant.</dt><dd>cycle thru available quantisations</dd><dt>modes</dt><dd>switches between combined and multinote modes</dd><dt>up</dt><dd>scroll up (notes)</dd><dt>down</dt><dd>scroll down (notes)</dd><dt>velocity</dt><dd><ul><li>cycle thru velocities and velocity shift notes</li><li>Velocity and Velocity Shift : Press shortly to cycle thru available velocities (used for creating note while pressing a button on the 8*8 matrix). Hold and press a note in the matrix to alter its velocity</li></ul></dd><dt>mute</dt><dd><ul><li>hold and press a note in the matrix to (un)mute it.</li><li>hold and press a note in the note selector to mute a lane</li><li>hold+nav keys to scroll up/down one octave</li></ul></dd></dl></figcaption>
+</figure>
+  </section>
+
+  <section id="melodic-seq">
+    <h2>Melodic step sequencer</h2>
+    <p>To activate this mode, press the User Mode 2 button until it turns green.</p>
+    <p>This mode behaves more like a hardware step sequencer. It uses the grid as a 7 × 8 matrix to edit note pitch, velocity, length and octave, one function per page. Of course, the pitches follow the selected scale!</p>
+    <p>The last row of the matrix selects the page and works like the loop selector of the combined step sequencer.</p>
+    <p>A double press on the last scene button toggles between monophonic and polyphonic modes.</p>
+    <p class="msg"><b>Note</b>The melodic step sequencer leaves alone the notes it cannot show: muted notes, notes outside the scale lanes or its 7 octaves, notes before the clip start and, in monophonic mode, extra notes on a step are kept as they are when you edit the clip.</p>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round green" title="select prev scene">prev scene</span><span class="round green" title="select next scene">next scene</span><span class="round green">prev track</span><span class="round green">next track</span><span class="round">Session mode</span><span class="round">user 1 device</span><span class="round green" title="cycle thru StepSequencers and User Mode 2">user 2 step</span><span class="round">mixer mode</span><span class="gap"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="Display Scale Selection Overlay">scale</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red" title="lock step seq to current clip (very useful !)">lock</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="cycle thru available quantisations.">quant.</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green" title="randomise the selected function (pitch,length,velocity,octave)">random !</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad red"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="round amber">length</span>
+    <span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="round red">octave</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red">velocity</span>
+    <span class="pad amber"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green">notes</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>prev scene</dt><dd>select prev scene</dd><dt>next scene</dt><dd>select next scene</dd><dt>user 2 step</dt><dd>cycle thru StepSequencers and User Mode 2</dd><dt>scale</dt><dd>Display Scale Selection Overlay</dd><dt>lock</dt><dd>lock step seq to current clip (very useful !)</dd><dt>quant.</dt><dd>cycle thru available quantisations.</dd><dt>random !</dt><dd>randomise the selected function (pitch,length,velocity,octave)</dd></dl></figcaption>
+</figure>
+  </section>
+
+  <section id="device">
+    <h2>Device Controller mode</h2>
+    <h3>Navigation</h3>
+    <p>Move among tracks and devices with the top left navigation buttons.</p>
+    <h3>Editing parameters</h3>
+    <p>You edit eight parameters of the selected device on the selected track at once, one parameter per column. Scene buttons 2 and 3 move through the banks of parameters. The Launchpad shows a parameter differently depending on its type.</p>
+    <dl class="terms">
+      <dt>On/off parameters</dt>
+      <dd>Shown in red. A single button changes the parameter.</dd>
+      <dt>Parameters with a list of values</dt>
+      <dd>Shown in amber, for example a synth waveform selector (square, sine, triangle). If the parameter has fewer than 8 values, each is directly available on its own button. If it has more, you scroll through the values: the closer the button to the centre, the finer the step; the closer to the top or bottom of the Launchpad, the bigger the change at each press.</dd>
+      <dt>Parameters with continuous values</dt>
+      <dd>Shown in green, for parameters like volume or panning. By default the Launchpad shows the parameter like a volume slider in mixer mode. If you turn on the precision slider mode (press scene button 4), the sliders work like the parameters with a list of values.</dd>
+      <dt>Stepless sliders</dt>
+      <dd>For parameters with continuous values, stepless sliders are on by default (<code>DEVICE_CONTROLLER__STEPLESS_MODE</code> in <code>Settings.py</code>); a long press on scene button 4 turns them on or off. The harder you press a slider, the faster the value changes (hard enough, and it changes at once). The slides now advance with Live's own display updates, in steps of about a tenth of a second, at the same speed as before.</dd>
+    </dl>
+    <h3>Locking to devices</h3>
+    <p>You can save up to 4 devices on the 4 bottom scene buttons. When no device is saved, the button is pink. To save a device, select it, then hold one of the 4 last scene buttons for more than half a second: the button turns red, your device is saved. Recall it at any time with a short press on that scene button. To unsave a device, hold the button long again.</p>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round red">device+</span><span class="round red">device-</span><span class="round red">track-</span><span class="round red">track+</span><span class="round">session mode</span><span class="round red">user 1 device</span><span class="round" title="cycle thru StepSequencers and User Mode 2">user 2 step</span><span class="round">mixer mode</span><span class="gap"></span>
+    <span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red">on/off</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green">bank+</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green">bank-</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber">precision stepless</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="round amber">lock1</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad green"></span><span class="round amber">lock2</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="round amber">lock3</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="pad green"></span><span class="round amber">lock4</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>user 2 step</dt><dd>cycle thru StepSequencers and User Mode 2</dd></dl></figcaption>
+</figure>
+  </section>
+
+  <section id="session">
+    <h2>Session mode</h2>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round green">scenes up</span><span class="round green">scenes down</span><span class="round green">tracks left</span><span class="round green">tracks right</span><span class="round amber">Session mode</span><span class="round amber">user 1 Inst.</span><span class="round amber">user 2 step</span><span class="round amber">mixer mode</span><span class="gap"></span>
+    <span class="pad red"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="round">scene</span>
+    <span class="pad green"></span><span class="pad amber"></span><span class="pad green"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="round">scene</span>
+    <span class="pad red"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="round">scene</span>
+    <span class="pad red"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="round">scene</span>
+    <span class="pad red"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="round">scene</span>
+    <span class="pad red"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="round">scene</span>
+    <span class="pad red"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round">scene</span>
+    <span class="pad red"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round">scene</span>
+  </div>
+</figure>
+  </section>
+
+  <section id="toc_3_session_pro">
+    <h2>Pro Session mode</h2>
+    <p>This mode adds functions to the classic Session mode. To activate Pro Session mode, press and release the Session button (the mode button stays amber). Repeat to go back to the normal Session mode.</p>
+    <p>The navigation buttons move the session box (note that it has only 7 rows). The scene buttons perform several functions, shown below.</p>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round green">prev scene</span><span class="round green">next scene</span><span class="round green">prev track</span><span class="round green">next track</span><span class="round amber">Session mode</span><span class="round amber">user 1 Inst.</span><span class="round amber">user 2 step</span><span class="round amber">mixer mode</span><span class="gap"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green" title="Long press: redo.">Undo</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="also act as Shift Button / Double click: hide detail view / Shift + Matrix: select clip and show details / Shift + Last Row: clip launch quantization">Shift Sel LaunQ</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="Double click: Metronome ON/OFF / Tempo + Matrix: Fold/Unfold track / Shift + Tempo + Matrix: Launch scene / Tempo + Last Row: Tempo">BPM CpyPst</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="Double click: Record Quantization ON/OFF / Quantize + Matrix: Quantizes clip / Shift + Quantize + Matrix: Create new Scene / Quantize + Last Row: record quantization">Quant. RecQ</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green" title="Double click: Unsolo all tracks / Duplicate + Matrix: Duplicate clip / Shift + Duplicate + Matrix: Duplicate Scene / Duplicate + Last Row: Solo Track">Double FixLen</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red" title="Double click: Unmute all tracks / Delete + Matrix: Delete clip / Shift + Delete + Matrix: Delete Scene / Delete + Last Row: Mute Track">Delete Mute</span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber" title="Double click: Unsolo all tracks / Duplicate + Matrix: Duplicate clip / Shift + Duplicate + Matrix: Duplicate Scene / Duplicate + Last Row: Solo Track">Duplic. Solo</span>
+    <span class="pad green"></span><span class="pad amber"></span><span class="pad amber"></span><span class="pad mandarin"></span><span class="pad mandarin"></span><span class="pad mandarin"></span><span class="pad mandarin"></span><span class="pad mandarin"></span><span class="round red" title="Shift + Record: Single/Multi Record mode / Single Record / Single click: Session Record ON/OFF / Record + Matrix: Arm track and launch clip (Record/Overdub clip) / Record + Last Row: Arm Track / Multi Record / Single click: Jump to the next available clip slot and start recording for each armed track / Matrix Button: Arm clip track and launch clip (Record/Overdub clip) / Record + Last Row: Arm Track">Record Arm</span>
+  </div>
+  <figcaption><dl class="lp-notes"><dt>Undo</dt><dd>Long press: redo.</dd><dt>Shift Sel LaunQ</dt><dd><ul><li>also act as Shift Button</li><li>Double click: hide detail view</li><li>Shift + Matrix: select clip and show details</li><li>Shift + Last Row: clip launch quantization</li></ul></dd><dt>BPM CpyPst</dt><dd><ul><li>Double click: Metronome ON/OFF</li><li>Tempo + Matrix: Fold/Unfold track</li><li>Shift + Tempo + Matrix: Launch scene</li><li>Tempo + Last Row: Tempo</li></ul></dd><dt>Quant. RecQ</dt><dd><ul><li>Double click: Record Quantization ON/OFF</li><li>Quantize + Matrix: Quantizes clip</li><li>Shift + Quantize + Matrix: Create new Scene</li><li>Quantize + Last Row: record quantization</li></ul></dd><dt>Double FixLen</dt><dd><ul><li>Double click: Unsolo all tracks</li><li>Duplicate + Matrix: Duplicate clip</li><li>Shift + Duplicate + Matrix: Duplicate Scene</li><li>Duplicate + Last Row: Solo Track</li></ul></dd><dt>Delete Mute</dt><dd><ul><li>Double click: Unmute all tracks</li><li>Delete + Matrix: Delete clip</li><li>Shift + Delete + Matrix: Delete Scene</li><li>Delete + Last Row: Mute Track</li></ul></dd><dt>Duplic. Solo</dt><dd><ul><li>Double click: Unsolo all tracks</li><li>Duplicate + Matrix: Duplicate clip</li><li>Shift + Duplicate + Matrix: Duplicate Scene</li><li>Duplicate + Last Row: Solo Track</li></ul></dd><dt>Record Arm</dt><dd><ul><li>Shift + Record: Single/Multi Record mode</li><li>Single Record</li><li>Single click: Session Record ON/OFF</li><li>Record + Matrix: Arm track and launch clip (Record/Overdub clip)</li><li>Record + Last Row: Arm Track</li><li>Multi Record</li><li>Single click: Jump to the next available clip slot and start recording for each armed track</li><li>Matrix Button: Arm clip track and launch clip (Record/Overdub clip)</li><li>Record + Last Row: Arm Track</li></ul></dd></dl></figcaption>
+</figure>
+    <p>Below is the last matrix row for each of the modes.</p>
+    <h3>Launch and record quantization, and fixed clip length recording</h3>
+<figure class="lp short">
+  <div class="lp-dev" style="--rows:1">
+    <span class="pad green">on/off</span><span class="pad amber">decrease</span><span class="pad amber">increase</span><span class="pad mandarin">value1</span><span class="pad mandarin">value2</span><span class="pad mandarin">value3</span><span class="pad mandarin">value4</span><span class="pad mandarin">value5</span><span class="round red">Record Arm</span>
+  </div>
+</figure>
+    <h3>Metronome and tempo</h3>
+<figure class="lp short">
+  <div class="lp-dev" style="--rows:1">
+    <span class="pad green">on/off</span><span class="pad amber">nudge left</span><span class="pad amber">nudge right</span><span class="pad mandarin">-5</span><span class="pad mandarin">-1</span><span class="pad mandarin">+1</span><span class="pad mandarin">+5</span><span class="pad mandarin">tap</span><span class="round red">Record Arm</span>
+  </div>
+</figure>
+    <h3>Mute, solo, arm</h3>
+<figure class="lp short">
+  <div class="lp-dev" style="--rows:1">
+    <span class="pad red">arm mute solo</span><span class="pad red">arm mute solo</span><span class="pad red">arm mute solo</span><span class="pad red">arm mute solo</span><span class="pad red">arm mute solo</span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red">Record Arm</span>
+  </div>
+</figure>
+  </section>
+
+  <section id="user-modes">
+    <h2>User 1 and User 2 modes</h2>
+    <p>The plain User 1 and User 2 modes are disabled by default. Enable them again by editing <code>USER_MODES_1</code> and <code>USER_MODES_2</code> in <code>Settings.py</code>.</p>
+    <h3>User 1 mode</h3>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round"></span><span class="round"></span><span class="round"></span><span class="round"></span><span class="round amber">Session mode</span><span class="round red">user 1 Inst.</span><span class="round amber">user 2 step</span><span class="round amber">mixer mode</span><span class="gap"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+  </div>
+</figure>
+    <h3>User 2 mode</h3>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round"></span><span class="round"></span><span class="round"></span><span class="round"></span><span class="round amber">Session mode</span><span class="round amber">user 1 Inst.</span><span class="round red">user 2 step</span><span class="round amber">mixer mode</span><span class="gap"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+    <span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round"></span>
+  </div>
+</figure>
+  </section>
+
+  <section id="mixer">
+    <h2>Mixer mode</h2>
+    <h3>Volume</h3>
+    <p>To change the levels of the volume slider buttons, set <code>VOLUME_LEVELS</code> in <code>Settings.py</code>.</p>
+<figure class="lp">
+  <div class="lp-dev" style="--rows:9">
+    <span class="round green">prev scene</span><span class="round green">next scene</span><span class="round green">prev track</span><span class="round green">next track</span><span class="round amber">Session mode</span><span class="round amber">user 1 Inst.</span><span class="round amber">user 2 step</span><span class="round amber">mixer mode</span><span class="gap"></span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green">Volume</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green">Pan</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green">Send A</span>
+    <span class="pad green"></span><span class="pad green"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round green">Send B</span>
+    <span class="pad red"></span><span class="pad red"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red">Stop All</span>
+    <span class="pad amber"></span><span class="pad amber"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round amber">Active all</span>
+    <span class="pad red"></span><span class="pad red"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red">Unsolo all</span>
+    <span class="pad red"></span><span class="pad red"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="pad"></span><span class="round red">Unarm All</span>
+  </div>
+</figure>
+  </section>
+
+  <section id="osd">
+    <h2>Max for Live on-screen display / helper</h2>
+    <p>Launchpad95 comes with a Max for Live device that shows useful information about the selected tracks, clips and other parameters. Make sure to try it!</p>
+    <img src="osd.png" alt="The Launchpad95 OSD device in Live: mode, track, clip and parameter information" width="650" height="76" class="shot">
+    <p>It is in <code>Launchpad95/M4LDevice/Launchpad95OSDHelper.amxd</code>.</p>
+  </section>
+
+  <section id="faq">
+    <h2>F.A.Q.</h2>
+    <dl class="terms">
+      <dt id="faq-1">1. Which Launchpads are supported?</dt>
+      <dd>Launchpad, Launchpad S, Mini, Mini MK2 and MK2 (RGB), Mini MK3 and Launchpad X: basically every Launchpad but the Pro. The Launchpad Pro is supported by <a href="https://w0ts.github.io/Launchpad_Pro95/">Launchpad Pro95</a>.</dd>
+      <dt id="faq-2">2. Which Ableton Live versions are supported?</dt>
+      <dd>Live 11 and later, Mac or Windows, Intro, Standard or Suite. Live 9.2 to 10 are served by the <a href="https://github.com/w0ts/Launchpad95/releases/tag/legacy-live9-10">archived Live 9/10 release</a>, which no longer changes.<br>From time to time Ableton changes Live's Python API without notice, and Launchpad95 may stop working. If it stopped working after a Live update, download the <a href="https://github.com/w0ts/Launchpad95/releases/latest">latest version</a>, and if that does not help, <a href="https://github.com/w0ts/Launchpad95/issues">open an issue</a>.</dd>
+      <dt id="faq-3">3. Where should I put the script?</dt>
+      <dd>In Live's browser, go to your User Library and create a folder <b>Remote Scripts</b>. Right-click this folder and select <i>Show in Finder</i> / <i>Show in Explorer</i>. Copy the Launchpad95 folder there.
+        <img src="setup-folders.png" alt="The User Library in Finder: Remote Scripts, then Launchpad95 with its .py files" width="701" height="227" class="shot"></dd>
+      <dt id="faq-4">4. Where should I put the script for Live 9 (archived release)?</dt>
+      <dd>
+        <details>
+          <summary>Live 9 installs the script inside the Live application</summary>
+          <p>On Windows: inside <code>C:\ProgramData\Ableton\Live 9 Suite\Resources\MIDI Remote Scripts</code>.<br>On a Mac, right-click the Live application you use (there may be more than one installed!) and select <i>Show Package Contents</i>, then browse to <code>App-Resources/MIDI Remote Scripts</code>.</p>
+          <p>Inside this <code>MIDI Remote Scripts</code> folder you should have a folder called <code>Launchpad95</code>, holding a bunch of <code>.py</code> files, and for each of them a <code>.pyc</code> file (the compiled version that Live makes as it starts).</p>
+          <p>Sometimes a picture is worth 1000 words. On a Mac it looks like this:</p>
+          <img src="setup-folders-9.png" alt="Live 9 on a Mac: MIDI Remote Scripts inside the application package, with Launchpad95" width="609" height="204" class="shot">
+          <p>On a PC like that:</p>
+          <img src="setup-folder-9-win.png" alt="Live 9 on Windows: MIDI Remote Scripts under ProgramData, with Launchpad95" width="696" height="400" class="shot">
+        </details>
+      </dd>
+      <dt id="faq-5">5. I installed everything, but the Launchpad does not light up when I select Launchpad95 in Live's settings. What is wrong?</dt>
+      <dd>It is hard to guess what went wrong; the install is probably not quite right. Try installing from scratch: download, unzip, copy, restart Live. Things to check:
+        <ul>
+          <li>that you installed it in the right place (see <a href="#faq-3">question 3</a>);</li>
+          <li>the folder name AND its full path (again, see the picture in <a href="#faq-3">question 3</a>);</li>
+          <li>how many versions of Live you have installed;</li>
+          <li>that you run Live 11 or later (for Live 9.2 and 10, the <a href="https://github.com/w0ts/Launchpad95/releases/tag/legacy-live9-10">archived release</a>; for Live 8, Launchpad85, no longer maintained);</li>
+          <li>on a Launchpad X or Mini MK3, that Input and Output are the MIDI port, not the DAW port (see <a href="#install">Setup</a>).</li>
+        </ul></dd>
+      <dt id="faq-6">6. I installed everything, but Launchpad95 does not appear in the Control Surface list. What is wrong?</dt>
+      <dd>See <a href="#faq-5">question 5</a>.</dd>
+      <dt id="faq-7">7. Note feedback does not work in the Instrument Controller</dt>
+      <dd>Make sure the Launchpad MIDI input and output have <b>Track</b> turned on in Live's MIDI settings.</dd>
+      <dt id="faq-8">8. Live 8?</dt>
+      <dd>Live 8.4 had its own version, Launchpad85, which is no longer maintained.</dd>
+    </dl>
+  </section>
+
+  <section id="issues">
+    <h2>Known issues</h2>
+    <ul>
+      <li><b>Older versions on Live 11 and later</b> make Live show this warning about Launchpad95:
+        <img src="live11-api.png" alt="Live's warning: a custom MIDI Remote Script uses an older process to modify MIDI notes" width="494" height="277" class="shot">
+        <p>It concerns only the step sequencers, which used Live's older note functions: editing a clip with them lost MPE, probability, velocity deviation and release velocity. The current version uses the note functions of Live 11 and keeps probability, velocity deviation and release velocity when it rewrites a note. If you still use an older version and do not use the step sequencers, you can ignore the warning.</p></li>
+      <li>Archived Live 9 release: in Live 9, moving notes in the clip editor while the step sequencer is open duplicates notes.</li>
+      <li>Launchpad85, for Live 8, is no longer maintained.</li>
+    </ul>
+  </section>
+
+  <section id="changes">
+    <h2>Changes</h2>
+    <p>What changed in each version, from the first public version in 2011 to now: <a href="https://github.com/w0ts/Launchpad95/blob/master/CHANGELOG.md">the change log</a>.</p>
+    <p>Recent changes: the step sequencers use Live 11's note API, many bug fixes, the device controller runs on Live's main thread, and an automated test suite. The script now needs Live 11 or later.</p>
+  </section>
+
+  <section id="source">
+    <h2>Source, credits and contact</h2>
+    <p>Source code, releases and issues: <a href="https://github.com/w0ts/Launchpad95">github.com/w0ts/Launchpad95</a>. Bug reports and suggestions are welcome as <a href="https://github.com/w0ts/Launchpad95/issues">GitHub issues</a>. The original discussion lives in <a href="http://forum.ableton.com/viewtopic.php?f=1&amp;t=168495">this thread on the Ableton forum</a>.</p>
+    <p>Launchpad95 is by w0ts, based on Ableton's Launchpad scripts, with contributions from Daniel Erceg, Pablo Torres (<a href="https://github.com/poltow/Launchpad97">Poltow, Launchpad97</a>: Pro Session mode and note repeat), Thomas Frössman, MrMatch246 (stepless faders, clip scales) and others; the French manual is by François Lehérissier. GPL-3.0.</p>
+    <p class="note">Not affiliated with Novation or Ableton. Launchpad is a trademark of Focusrite Audio Engineering; Ableton Live is a trademark of Ableton AG.</p>
+  </section>
+</main>
+</body>
+</html>
