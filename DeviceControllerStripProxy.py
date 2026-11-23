@@ -6,11 +6,19 @@ from threading import Thread
 from .DeviceControllerStripServer import DeviceControllerStripServer
 from .Log import log
 
-non_returns = ["set_precision_mode", "set_stepless_mode", "shutdown",
-               "update", "reset_if_no_parameter", "_button_value", "connect_to",
-               "release_parameter", "set_parent", ]
+non_returns = [
+    "set_precision_mode",
+    "set_stepless_mode",
+    "shutdown",
+    "update",
+    "reset_if_no_parameter",
+    "_button_value",
+    "connect_to",
+    "release_parameter",
+    "set_parent",
+]
 
-returning = ["set_enabled", "param_name", "param_value","__ne__"]
+returning = ["set_enabled", "param_name", "param_value", "__ne__"]
 
 
 class DeviceControllerStripProxy:
@@ -20,16 +28,19 @@ class DeviceControllerStripProxy:
         self.failed = False
         self.column = column
         self.request_id = 0
-        self.server = DeviceControllerStripServer(buttons, control_surface,
-                                                  column,
-                                                  request_queue=self._request_queue,
-                                                  response_queue=self._response_queue,
-                                                  parent=parent)
+        self.server = DeviceControllerStripServer(
+            buttons,
+            control_surface,
+            column,
+            request_queue=self._request_queue,
+            response_queue=self._response_queue,
+            parent=parent,
+        )
         self._server_process = Thread(target=self.server.run)
         self._server_process.start()
 
     def __getattr__(self, item):
-        #log(f'Proxy{self.column}: __getattr__ {item}')
+        # log(f'Proxy{self.column}: __getattr__ {item}')
         if self.failed:
             raise AttributeError(f"device strip {self.column} failed: no {item}")
         if item in non_returns:
@@ -37,7 +48,7 @@ class DeviceControllerStripProxy:
         elif item in returning:
             return partial(self._call_return_handler, item)
         else:
-            #log(f'Proxy{self.column}: __getattr__ {item} not found !!!!!!!!!')
+            # log(f'Proxy{self.column}: __getattr__ {item} not found !!!!!!!!!')
             return partial(self._call_non_return_handler, item)
 
     def shutdown(self):
@@ -62,11 +73,11 @@ class DeviceControllerStripProxy:
                 if token == current_id:
                     break
                 # else: an old response, keep waiting for ours
-            if response == 'None' and False:
+            if response == "None" and False:
                 return None
             return response
         except queue.Empty:
             self.failed = True
-            #log(f'Proxy{self.column}: _call_return_handler {name} {args} {kwargs} failed')
+            # log(f'Proxy{self.column}: _call_return_handler {name} {args} {kwargs} failed')
             log(traceback.format_stack())
             return

@@ -8,26 +8,25 @@ class ButtonSliderElement(SliderElement, SlotManager):
 
     def __init__(self, buttons):
         SliderElement.__init__(self, MIDI_INVALID_TYPE, 0, 0)
-        self._parameter_value_slot = self.register_slot(None, self._on_parameter_changed, 'value')
+        self._parameter_value_slot = self.register_slot(None, self._on_parameter_changed, "value")
         self._buttons = buttons
         self._last_sent_value = -1
         self._button_slots = self.register_slot_manager()
         for button in self._buttons:
-            self._button_slots.register_slot(button,
-                                             (self._button_value), 'value', extra_kws={'identify_sender': True})
+            self._button_slots.register_slot(button, (self._button_value), "value", extra_kws={"identify_sender": True})
 
     def disconnect(self):
         SliderElement.disconnect(self)
         self._buttons = None
 
     def message_channel(self):
-        raise NotImplementedError('message_channel() should not be called directly on ButtonSliderElement')
+        raise NotImplementedError("message_channel() should not be called directly on ButtonSliderElement")
 
     def message_identifier(self):
-        raise NotImplementedError('message_identifier() should not be called directly on ButtonSliderElement')
+        raise NotImplementedError("message_identifier() should not be called directly on ButtonSliderElement")
 
     def message_map_mode(self):
-        raise NotImplementedError('message_map_mode() should not be called directly on ButtonSliderElement')
+        raise NotImplementedError("message_map_mode() should not be called directly on ButtonSliderElement")
 
     def install_connections(self, install_translation_callback, install_mapping_callback, install_forwarding_callback):
         pass
@@ -43,7 +42,7 @@ class ButtonSliderElement(SliderElement, SlotManager):
         InputControlElement.release_parameter(self)
 
     def identifier_bytes(self):
-        raise RuntimeWarning('identifier_bytes() should not be called on ButtonSliderElement')
+        raise RuntimeWarning("identifier_bytes() should not be called on ButtonSliderElement")
 
     def send_value(self, value):
         if value != self._last_sent_value:
@@ -66,7 +65,9 @@ class ButtonSliderElement(SliderElement, SlotManager):
             if self._parameter_to_map_to != None:
                 if self._parameter_to_map_to.is_enabled:
                     param_range = self._parameter_to_map_to.max - self._parameter_to_map_to.min
-                    param_value = param_range * index_of_sender / (len(self._buttons) - 1) + self._parameter_to_map_to.min
+                    param_value = (
+                        param_range * index_of_sender / (len(self._buttons) - 1) + self._parameter_to_map_to.min
+                    )
                     if index_of_sender > 0:
                         param_value += param_range / (4 * len(self._buttons))
                         if param_value > self._parameter_to_map_to.max:

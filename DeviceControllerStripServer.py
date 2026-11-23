@@ -14,16 +14,23 @@ SLIDER_MODE_SMALL_ENUM = 4
 SLIDER_MODE_BIG_ENUM = 5
 ROUNDTRIP_TARGET = 0.05
 
-non_returns = ["set_precision_mode", "set_stepless_mode", "shutdown", "update",
-               "reset_if_no_parameter", "_button_value", "connect_to",
-               "release_parameter", "set_parent", ]
+non_returns = [
+    "set_precision_mode",
+    "set_stepless_mode",
+    "shutdown",
+    "update",
+    "reset_if_no_parameter",
+    "_button_value",
+    "connect_to",
+    "release_parameter",
+    "set_parent",
+]
 
 returning = ["set_enabled", "param_name", "param_value", "__ne__"]
 
 
 class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
-    def __init__(self, buttons, control_surface, column, request_queue,
-        response_queue, parent=None):
+    def __init__(self, buttons, control_surface, column, request_queue, response_queue, parent=None):
         ButtonSliderElement.__init__(self, buttons)
         self._control_surface = control_surface
         self._column = column
@@ -31,9 +38,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
         self._response_queue = response_queue
         self._parent = parent
         self._num_buttons = len(buttons)
-        self._value_map = tuple(
-            [float(index) / (self._num_buttons - 1) for index in
-             range(self._num_buttons)])
+        self._value_map = tuple([float(index) / (self._num_buttons - 1) for index in range(self._num_buttons)])
         self._last_value_map_index = -1
         self._precision_mode = False
         self._stepless_mode = False
@@ -166,9 +171,9 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                 self._update_small_enum()
             elif self._mode == SLIDER_MODE_BIG_ENUM:
                 self._update_big_enum()
-            elif (self._mode == SLIDER_MODE_SLIDER):
+            elif self._mode == SLIDER_MODE_SLIDER:
                 self._update_slider()
-            elif (self._mode == SLIDER_MODE_PRECISION_SLIDER):
+            elif self._mode == SLIDER_MODE_PRECISION_SLIDER:
                 self._update_precision_slider()
             else:
                 self._update_off()
@@ -225,10 +230,8 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
             prev_value = self._value_map[max(0, index - 1)]
             offset_third = (current_value - prev_value) / 3
             current_window = current_value * self._range + self._min
-            one_third_window = (
-                                       prev_value + offset_third) * self._range + self._min
-            second_third_window = (
-                                          prev_value + offset_third * 2) * self._range + self._min
+            one_third_window = (prev_value + offset_third) * self._range + self._min
+            second_third_window = (prev_value + offset_third * 2) * self._range + self._min
 
             if self._value >= current_window:
                 update_index = index
@@ -240,15 +243,12 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                 if Settings.USE_CUSTOM_DEVICE_CONTROL_COLORS:
                     if one_third_window <= self._value < second_third_window:
                         update_index = index
-                        v[index] = "Device.CustomSlider" + str(
-                            self._column) + ".Third"
+                        v[index] = "Device.CustomSlider" + str(self._column) + ".Third"
                     elif second_third_window <= self._value < current_window:
                         update_index = index
-                        v[index] = "Device.CustomSlider" + str(
-                            self._column) + ".Half"
+                        v[index] = "Device.CustomSlider" + str(self._column) + ".Half"
                     else:
-                        v[index] = "Device.CustomSlider" + str(
-                            self._column) + ".Off"
+                        v[index] = "Device.CustomSlider" + str(self._column) + ".Off"
                 else:
                     v[index] = "Device.DefaultSlider.Off"
             if self._timed_mode and self._timed_start > 0 and self._stepless_mode:
@@ -273,10 +273,9 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
 
     def _update_buttons(self, buttons):
         assert isinstance(buttons, tuple)
-        assert (len(buttons) == len(self._buttons))
+        assert len(buttons) == len(self._buttons)
         for index in range(len(self._buttons)):
-            self._buttons[index].set_on_off_values(buttons[index],
-                                                   buttons[index])
+            self._buttons[index].set_on_off_values(buttons[index], buttons[index])
             if buttons[index].endswith("On"):  # buttons[index]>0:
                 self._buttons[index].turn_on()
             else:
@@ -284,7 +283,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
 
     def _button_value(self, value, sender):
         assert isinstance(value, int)
-        assert (sender in self._buttons)
+        assert sender in self._buttons
         # log(f"button_value: value: {value} Mode: {self._mode} Range: {self._range} Momentary: {sender.is_momentary()}")
         self._last_sent_value = -1
         if self._parameter_to_map_to is not None and self._enabled:
@@ -294,8 +293,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
 
                 target_value = self._parameter_to_map_to.value
 
-                if (
-                    self._mode == SLIDER_MODE_TOGGLE) and index_of_sender == 0:
+                if (self._mode == SLIDER_MODE_TOGGLE) and index_of_sender == 0:
                     if self._value == self._max:
                         target_value = self._min
                     else:
@@ -319,12 +317,10 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                         else:
                             target_value = self._min
 
+                elif self._mode == SLIDER_MODE_SLIDER:
+                    target_value = self._value_map[index_of_sender] * self._range + self._min
 
-                elif (self._mode == SLIDER_MODE_SLIDER):
-                    target_value = self._value_map[
-                                       index_of_sender] * self._range + self._min
-
-                elif (self._mode == SLIDER_MODE_PRECISION_SLIDER):
+                elif self._mode == SLIDER_MODE_PRECISION_SLIDER:
                     inc = float(self._range) / 128
                     if self._range > 7 and inc < 1:
                         inc = 1
@@ -351,15 +347,14 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                 self.update()
                 if self._parent is not None:
                     self._custom_update_OSD()
-            elif (value == 0):
+            elif value == 0:
                 index_of_sender = list(self._buttons).index(sender)
                 if self._timed_mode and index_of_sender == self._last_pressed_index:
                     pressed_time = time.time() - self._timed_start
                     new_velocity = self._calc_velocity(pressed_time)
 
-                    #log(f"Pressed time: {pressed_time} Index: {index_of_sender} Velo: {new_velocity}")
-                    self.update_current_parameter_value(
-                        self._primed_target_value, new_velocity)
+                    # log(f"Pressed time: {pressed_time} Index: {index_of_sender} Velo: {new_velocity}")
+                    self.update_current_parameter_value(self._primed_target_value, new_velocity)
 
                     self._timed_start = 0
                     self._last_pressed_index = -1
@@ -377,11 +372,10 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
         needed_rounds = max(1, needed_rounds)
         change_per_round = self._range / needed_rounds
         velocity = change_per_round * 127.0
-        #log(f"Step {self._timed_step} TDC Map Index: {int(tdc_map_index)} TDC Entry: {tdc_entry} Needed Rounds: {needed_rounds} Change per round: {change_per_round} Velocity: {velocity}")
+        # log(f"Step {self._timed_step} TDC Map Index: {int(tdc_map_index)} TDC Entry: {tdc_entry} Needed Rounds: {needed_rounds} Change per round: {change_per_round} Velocity: {velocity}")
         return velocity
 
-    def update_current_parameter_value(self, new_target_value=None,
-        new_velocity=None):
+    def update_current_parameter_value(self, new_target_value=None, new_velocity=None):
         target_value = self._target_value if new_target_value is None else new_target_value
         velocity = self._current_velocity if new_velocity is None else new_velocity
         current_value = self._current_value
@@ -397,8 +391,13 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                         # log(f"A Current-{self._column}: RuntimeError for parameter {self._parameter_to_map_to.name}")
                         pass
                     if tries > 500:
-                        log(" Current-" + str(
-                            self._column) + ": RuntimeError for parameter " + self._parameter_to_map_to.name + " !!!")
+                        log(
+                            " Current-"
+                            + str(self._column)
+                            + ": RuntimeError for parameter "
+                            + self._parameter_to_map_to.name
+                            + " !!!"
+                        )
                         break
                     continue
             self._current_value = self._parameter_to_map_to.value
@@ -411,9 +410,10 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
             if target_value != current_value:
                 max_diff = abs(target_value - current_value)
                 value_offset = self.calc_value_offset(velocity, max_diff)
-                new_value = current_value + value_offset if current_value < target_value else current_value - value_offset
-                new_value = max(min(new_value, self._parameter_to_map_to.max),
-                                self._parameter_to_map_to.min)
+                new_value = (
+                    current_value + value_offset if current_value < target_value else current_value - value_offset
+                )
+                new_value = max(min(new_value, self._parameter_to_map_to.max), self._parameter_to_map_to.min)
                 tries = 0
                 failed = False
                 while True:
@@ -442,17 +442,18 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                 parameter = param["parameter"]
                 param["current_value"] = parameter.value
                 if param["current_value"] != param["target_value"]:
-                    if round(param["last_value"], 5) == round(
-                        param["current_value"], 5):
+                    if round(param["last_value"], 5) == round(param["current_value"], 5):
                         target_value = param["target_value"]
                         velocity = param["current_velocity"]
                         current_value = param["current_value"]
                         max_diff = abs(target_value - current_value)
-                        value_offset = self.calc_value_offset(velocity,
-                                                              max_diff)
-                        new_value = current_value + value_offset if current_value < target_value else current_value - value_offset
-                        new_value = max(min(new_value, parameter.max),
-                                        parameter.min)
+                        value_offset = self.calc_value_offset(velocity, max_diff)
+                        new_value = (
+                            current_value + value_offset
+                            if current_value < target_value
+                            else current_value - value_offset
+                        )
+                        new_value = max(min(new_value, parameter.max), parameter.min)
                         tries = 0
                         while True:
                             try:
@@ -493,24 +494,24 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                         # log(f"Shutting down DCSServer {self._column}")
                         return
                     else:
-                        self._request_handler(funct_name, token, *args,
-                                              **kwargs)
+                        self._request_handler(funct_name, token, *args, **kwargs)
                 roundtrip_time = time.time() - self.roundtrip_start
-                time.sleep(max(0.0, self.roundtrip_target/10 - roundtrip_time))
+                time.sleep(max(0.0, self.roundtrip_target / 10 - roundtrip_time))
                 if self._request_queue.empty() or roundtrip_time > self.roundtrip_target:
 
                     self.roundtrip_end = time.time()
                     self.roundtrip_time = self.roundtrip_end - self.roundtrip_start
                     self.roundtrip_start = self.roundtrip_end
                     if self._timed_mode and self._timed_start > 0:
-                        self._timed_step = min(9, (int((
-                                                           self.roundtrip_end - self._timed_start) // self._timed_step_size)))
+                        self._timed_step = min(
+                            9, (int((self.roundtrip_end - self._timed_start) // self._timed_step_size))
+                        )
 
                         self.update()
                         if self._parent is not None:
                             self._custom_update_OSD()
 
-                    if (self._parameter_to_map_to is not None):
+                    if self._parameter_to_map_to is not None:
                         # if (self._parameter_to_map_to != None and self._enabled):
                         try:
                             self._current_value = self._parameter_to_map_to.value
@@ -522,8 +523,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                             self._last_value = self._current_value
 
                         if self._current_value != self._target_value:
-                            if round(self._last_value, 5) == round(
-                                self._current_value, 5):
+                            if round(self._last_value, 5) == round(self._current_value, 5):
                                 self.update_current_parameter_value()
                             else:
                                 # log(f"Parameter {self._parameter_to_map_to.name} changed while moving, Dropping!!")
@@ -532,8 +532,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                     self.update_parameter_stack()
 
         except Exception as e:
-            log("Run-Loop Exception in DCSServer " + str(
-                self._column) + ": Type " + str(type(e)) + "\n " + str(e))
+            log("Run-Loop Exception in DCSServer " + str(self._column) + ": Type " + str(type(e)) + "\n " + str(e))
             log(traceback.format_stack())
             log(traceback.format_exc())
             self._response_queue.put((0, "ERROR"))
@@ -544,8 +543,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
         self.current_token = token
         result = None
         if funct_name == "release_parameter":
-            self.releasing_parameter(funct_name, *args,
-                                     **kwargs)  # result = "None"
+            self.releasing_parameter(funct_name, *args, **kwargs)  # result = "None"
         elif funct_name == "connect_to":
             self.connecting_to(funct_name, *args, **kwargs)  # result = "None"
         elif funct_name in non_returns:
@@ -557,9 +555,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
         elif False:
             pass
         else:
-            log("DCSServer " + str(
-                self._column) + " _request_handler: unknown function " + str(
-                funct_name))
+            log("DCSServer " + str(self._column) + " _request_handler: unknown function " + str(funct_name))
             result = self._call_dispatcher(funct_name, *args, **kwargs)
 
         # log(f"DCSServer {self._column} Call dispatcher: {funct_name} returned {type(result)}")
@@ -617,9 +613,12 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
         value = self._parameter_to_map_to.value
         if self._parameter_to_map_to._live_ptr not in self._parameter_stack.keys():
             self._parameter_stack[self._parameter_to_map_to._live_ptr] = {
-                "parameter": self._parameter_to_map_to, "current_value": value,
-                "last_value": value, "target_value": self._target_value,
-                "current_velocity": self._current_velocity}
+                "parameter": self._parameter_to_map_to,
+                "current_value": value,
+                "last_value": value,
+                "target_value": self._target_value,
+                "current_velocity": self._current_velocity,
+            }
 
     def _call_dispatcher(self, method_name, *args, **kwargs):
         # log(f"DCSServer {self._column} calling {method_name} with {args} and {kwargs}")
@@ -629,14 +628,11 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                 if callable(method):
                     return method(*args, **kwargs)
                 else:
-                    log("DCSServer " + str(
-                        self._column) + "method " + method_name + " is not callable")
+                    log("DCSServer " + str(self._column) + "method " + method_name + " is not callable")
             else:
-                log("DCSServer " + str(
-                    self._column) + " has no method " + method_name)
+                log("DCSServer " + str(self._column) + " has no method " + method_name)
         except Exception as e:
-            log("Exception in DCSServer " + str(
-                self._column) + " _call_dispatcher :\n " + str(e))
+            log("Exception in DCSServer " + str(self._column) + " _call_dispatcher :\n " + str(e))
             log(traceback.print_exc())
             log(traceback.format_stack())
             raise e
@@ -646,14 +642,13 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
         # log(traceback.format_stack())
         # log(f"DCSServer {self._column} _on_parameter_changed {trigger_osd}")
         if self._enabled:
-            assert (self._parameter_to_map_to is not None)
+            assert self._parameter_to_map_to is not None
             if self._is_update_needed():
                 self.update()
             if self._parent is not None:
                 # this might be called be background thread -> crash
                 #
-                self._custom_update_OSD(
-                    trigger_osd)  # self._custom_update_OSD(False)
+                self._custom_update_OSD(trigger_osd)  # self._custom_update_OSD(False)
 
     def _custom_update_OSD(self, trigger_osd=True):
         if self._parent._osd is not None:
@@ -661,8 +656,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
             name = self.param_name()
             if name != "None":
                 self._parent._osd.attribute_names[self._column] = str(name)
-                self._parent._osd.attributes[self._column] = str(
-                    self.param_value())
+                self._parent._osd.attributes[self._column] = str(self.param_value())
             else:
                 self._parent._osd.attribute_names[self._column] = " "
                 self._parent._osd.attributes[self._column] = " "
@@ -680,7 +674,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
             change_per_roundtrip = velocity_factor / self.roundtrip_target
             value_offset = change_per_roundtrip * self.roundtrip_time
         else:
-            velocity_factor = (velocity / 127.0)
+            velocity_factor = velocity / 127.0
             change_per_roundtrip = velocity_factor / self.roundtrip_target
             value_offset = change_per_roundtrip * self.roundtrip_time
         return min(value_offset, max_diff)

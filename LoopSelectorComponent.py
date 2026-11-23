@@ -6,6 +6,8 @@ from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from .ClipNotes import write_all_notes
 
 STEPSEQ_MODE_MULTINOTE = 2
+
+
 class LoopSelectorComponent(ControlSurfaceComponent):
 
     def __init__(self, step_sequencer, buttons, control_surface):
@@ -31,15 +33,13 @@ class LoopSelectorComponent(ControlSurfaceComponent):
         self._loop_point1 = -1
         self._loop_point2 = -1
 
-        self._cache = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                       -1, -1]  # Length=16
+        self._cache = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]  # Length=16
 
         self._buttons = buttons
         for button in self._buttons:  # iterate 16 buttons of 4x4 lower right matrix section
             assert isinstance(button, ButtonElement)
             button.remove_value_listener(self._loop_button_value)
-            button.add_value_listener(self._loop_button_value,
-                                      identify_sender=True)
+            button.add_value_listener(self._loop_button_value, identify_sender=True)
 
     def disconnect(self):
         for button in self._buttons:
@@ -138,8 +138,9 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                 setloop = self._loop_point2 != -1  # two buttons pressed
                 if self._loop_point2 == -1:
                     self._loop_point2 = idx  # _loop_point1 = _loop_point2
-                    if self._last_button_idx == idx and (
-                        time.time() - self._last_button_time) < 0.25:  # Double clic set loop subsection (depending on quantization)
+                    if (
+                        self._last_button_idx == idx and (time.time() - self._last_button_time) < 0.25
+                    ):  # Double clic set loop subsection (depending on quantization)
                         setloop = True
                         self._last_button_time = time.time()
                         self._last_button_idx = -1
@@ -155,23 +156,23 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                             if self._is_velocity_shifted:
                                 self._mute_notes_in_range(
                                     start * self._blocksize * self._quantization,
-                                    end * self._blocksize * self._quantization)
+                                    end * self._blocksize * self._quantization,
+                                )
                             else:
                                 self._delete_notes_in_range(
                                     start * self._blocksize * self._quantization,
-                                    end * self._blocksize * self._quantization)
+                                    end * self._blocksize * self._quantization,
+                                )
                         else:
                             if self._is_velocity_shifted:  # FIX, see if can copy backwards
                                 self._extend_clip_content(
-                                    self._loop_start,
-                                    self._loop_end,
-                                    end * self._blocksize * self._quantization)
+                                    self._loop_start, self._loop_end, end * self._blocksize * self._quantization
+                                )
                             self.set_clip_loop(
-                                start * self._blocksize * self._quantization,
-                                end * self._blocksize * self._quantization)
+                                start * self._blocksize * self._quantization, end * self._blocksize * self._quantization
+                            )
 
-                    self._step_sequencer.set_page(
-                        self._block)  # set sequencer focus
+                    self._step_sequencer.set_page(self._block)  # set sequencer focus
                     self._loop_point1 = -1
                     self._loop_point2 = -1
                     self.update()
@@ -207,53 +208,47 @@ class LoopSelectorComponent(ControlSurfaceComponent):
             i = 0
             for button in self._buttons:  # iterate 16 buttons of 4x4 lower right matrix section
                 if self._clip == None:  # Disable/turn off all buttons
-                    button.set_on_off_values("DefaultButton.Disabled",
-                                             "DefaultButton.Disabled")
+                    button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
                     if self._cache[i] != button._off_value:
                         button.turn_off()
                         self._cache[i] = button._off_value
                 else:
                     # is the button in loop range
-                    in_loop = (
-                                  i * self._blocksize * self._quantization < self._loop_end) and (
-                                  i * self._blocksize * self._quantization >= self._loop_start)
+                    in_loop = (i * self._blocksize * self._quantization < self._loop_end) and (
+                        i * self._blocksize * self._quantization >= self._loop_start
+                    )
                     # is the playing position is inside the block represented by the button
-                    playing = self._playhead != None and self._playhead >= i * self._blocksize * self._quantization and self._playhead < (
-                        i + 1) * self._blocksize * self._quantization
+                    playing = (
+                        self._playhead != None
+                        and self._playhead >= i * self._blocksize * self._quantization
+                        and self._playhead < (i + 1) * self._blocksize * self._quantization
+                    )
                     # is this block selected (green)
                     selected = i == self.block
                     if in_loop:
                         if playing:
                             if selected:
-                                self._cache[
-                                    i] = "StepSequencer.LoopSelector.SelectedPlaying"
+                                self._cache[i] = "StepSequencer.LoopSelector.SelectedPlaying"
                             else:
-                                self._cache[
-                                    i] = "StepSequencer.LoopSelector.Playing"
+                                self._cache[i] = "StepSequencer.LoopSelector.Playing"
                         else:
                             if selected:
-                                self._cache[
-                                    i] = "StepSequencer.LoopSelector.Selected"
+                                self._cache[i] = "StepSequencer.LoopSelector.Selected"
                             else:
-                                self._cache[
-                                    i] = "StepSequencer.LoopSelector.InLoop"
+                                self._cache[i] = "StepSequencer.LoopSelector.InLoop"
                     else:
                         if playing:
                             if selected:
-                                self._cache[
-                                    i] = "StepSequencer.LoopSelector.SelectedPlaying"
+                                self._cache[i] = "StepSequencer.LoopSelector.SelectedPlaying"
                             else:
-                                self._cache[
-                                    i] = "StepSequencer.LoopSelector.Playing"
+                                self._cache[i] = "StepSequencer.LoopSelector.Playing"
                         else:
                             if selected:
-                                self._cache[
-                                    i] = "StepSequencer.LoopSelector.Selected"
+                                self._cache[i] = "StepSequencer.LoopSelector.Selected"
                             else:
                                 self._cache[i] = "DefaultButton.Disabled"
 
-                    if self._cache[
-                        i] != button._on_value or self._force:  # Enable/turn on all buttons
+                    if self._cache[i] != button._on_value or self._force:  # Enable/turn on all buttons
                         button.set_on_off_values(self._cache[i], self._cache[i])
                         button.turn_on()
                 i = i + 1
@@ -265,36 +260,32 @@ class LoopSelectorComponent(ControlSurfaceComponent):
         loop_length = old_loop_end - loop_start
         if loop_length > 0 and self._no_notes_in_range(old_loop_end, new_loop_end, True):
             clip_looping_length = 0
-            if (loop_length > 1):
+            if loop_length > 1:
                 power = 1
-                while (power * 2 < loop_length):
+                while power * 2 < loop_length:
                     power *= 2
-                clip_looping_length = (power)
+                clip_looping_length = power
             clone_length = new_loop_end - old_loop_end
-            if (clip_looping_length > 0):
+            if clip_looping_length > 0:
                 clone_start_point = loop_start + (loop_length % clip_looping_length)
             else:
                 clone_start_point = loop_start
-            self._copy_notes_in_range(clone_start_point,
-                                      clone_start_point + clone_length,
-                                      old_loop_end)
+            self._copy_notes_in_range(clone_start_point, clone_start_point + clone_length, old_loop_end)
 
     # Does the note by note copy OK
     def _copy_notes_in_range(self, start, end, new_start):
         new_notes = list(self._note_cache)
         for note in self._note_cache:
             if note[1] >= start and note[1] < end:
-                new_notes.append(
-                    [note[0], note[1] + new_start - start, note[2], note[3],
-                     note[4]])
+                new_notes.append([note[0], note[1] + new_start - start, note[2], note[3], note[4]])
         write_all_notes(self._clip, new_notes)
 
     # Checks if a range is empty OK
     def _no_notes_in_range(self, start, end, or_after):
         for note in list(self._note_cache):
             if note[1] >= start and (note[1] < end or or_after):
-                return (False)
-        return (True)
+                return False
+        return True
 
     # Deletes a block of notes OK
     def _delete_notes_in_range(self, start, end):
@@ -307,11 +298,9 @@ class LoopSelectorComponent(ControlSurfaceComponent):
     # Mutes a block of notes OK
     def _mute_notes_in_range(self, start, end):
         new_notes = list()
-        for note in list(
-            self._note_cache):  # Note -> tuple containing pitch, time, duration, velocity, and mute
+        for note in list(self._note_cache):  # Note -> tuple containing pitch, time, duration, velocity, and mute
             if note[1] < start or note[1] >= end:  # Note time
                 new_notes.append(note)
             else:
-                new_notes.append([note[0], note[1], note[2], note[3],
-                                  not note[4]])  # Negate mute state
+                new_notes.append([note[0], note[1], note[2], note[3], not note[4]])  # Negate mute state
         write_all_notes(self._clip, new_notes)
