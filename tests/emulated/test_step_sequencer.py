@@ -168,7 +168,6 @@ def test_loop_selector_pad_shows_another_page(make_rig, model):
 	assert clip(rig).note_tuples()[0][1] == 32 * editor.quantization
 
 
-@pytest.mark.xfail(strict=True, reason="bug (if Live fires loop listeners synchronously, as the fake does): LoopSelectorComponent.set_clip_loop sets loop_start first, the loop_start listener re-reads the old loop_end into _loop_end, so the new loop_end is lost")
 def test_double_tap_on_a_loop_pad_sets_the_clip_loop(make_rig, model):
 	rig = long_clip_rig(make_rig, model)
 	rig.tap(5, 4)
@@ -287,3 +286,45 @@ def test_note_selector_selects_low_notes(seq_rig, note):
 	selector.set_key(5)
 	selector.set_selected_note(note)
 	assert selector._root_note + selector._offset == note
+
+
+def test_multinote_two_lines_autoscroll_shows_the_playing_page(make_rig, model):
+	rig = long_clip_rig(make_rig, model)
+	seq = stepseq(rig)
+	seq.set_mode(2, 2)  # multinote, 2 lines per note: a page is 16 steps
+	q = seq._note_editor.quantization
+	seq._loop_selector.set_playhead(17 * q, True)
+	assert seq._note_editor._page == 1
+
+
+def test_multinote_two_lines_scroll_moves_one_page(make_rig, model):
+	rig = long_clip_rig(make_rig, model)
+	seq = stepseq(rig)
+	seq.set_mode(2, 2)
+	q = seq._note_editor.quantization
+	rig.tap_top(3)  # right
+	assert seq._note_editor._page == 1
+	rig.tap(0, 0)
+	assert clip(rig).note_tuples()[0][1] == 16 * q
+	rig.tap_top(3)
+	rig.tap_top(3)
+	rig.tap_top(3)  # 4 pages of 16 steps in 64 steps: the last one is page 3
+	assert seq._note_editor._page == 3
+
+
+def test_extending_the_loop_copies_the_loop_not_the_clip_start(make_rig, model):
+	rig = long_clip_rig(make_rig, model, length=4.0)
+	c = clip(rig)
+	c.loop_start = 2.0
+	c.add_new_notes((Live.Clip.MidiNoteSpecification(pitch=36, start_time=2.0, duration=0.25, velocity=100, mute=False),
+		Live.Clip.MidiNoteSpecification(pitch=40, start_time=0.5, duration=0.25, velocity=100, mute=False)))
+	rig.tick()
+	rig.press_side(VELOCITY)  # held: the new blocks get a copy of the loop
+	rig.press(5, 4)  # block 1 (beats 2-4): the loop
+	rig.press(6, 4)  # block 2 (beats 4-6)
+	rig.release(6, 4)
+	rig.release(5, 4)
+	rig.release_side(VELOCITY)
+	assert (c.loop_start, c.loop_end) == (2.0, 6.0)
+	assert (36, 4.0) in [(n[0], n[1]) for n in c.note_tuples()]
+	assert all(n[1] < 4.0 for n in c.note_tuples() if n[0] == 40)

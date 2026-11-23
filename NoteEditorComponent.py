@@ -127,11 +127,10 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		else:
 			return self.height
 
-	def set_page(self, page):
-		if self.is_multinote:
-			self._page = page
-		else:
-			self._page = int(page / 4)  # 4 lines per note (32 steps seq)
+	def set_page(self, block):
+		# block: a loop selector block of 8 steps; a page shows number_of_lines_per_note
+		# blocks (multinote: 1 or 2 lines per note; normal mode: the 4 rows of the editor)
+		self._page = block // self.number_of_lines_per_note
 
 	def set_clip(self, clip):
 		self._clip = clip

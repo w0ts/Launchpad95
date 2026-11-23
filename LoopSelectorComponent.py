@@ -102,18 +102,21 @@ class LoopSelectorComponent(ControlSurfaceComponent):
     # Write LoopSelector Values to Live's Clip loop values (loop and marker) OK
     def set_clip_loop(self, start, end):
         if self._clip != None:
-            self._loop_end = end
-            self._loop_start = start
-            if self._loop_start >= self._clip.loop_end:
-                self._clip.loop_end = self._loop_end
-                self._clip.loop_start = self._loop_start
-                self._clip.end_marker = self._loop_end
-                self._clip.start_marker = self._loop_start
+            # start and end are locals: the clip's loop listeners may call update(),
+            # which reads the clip loop back into self._loop_start / self._loop_end.
+            # The order keeps start < end at every step.
+            if start >= self._clip.loop_end:
+                self._clip.loop_end = end
+                self._clip.loop_start = start
+                self._clip.end_marker = end
+                self._clip.start_marker = start
             else:
-                self._clip.loop_start = self._loop_start
-                self._clip.loop_end = self._loop_end
-                self._clip.start_marker = self._loop_start
-                self._clip.end_marker = self._loop_end
+                self._clip.loop_start = start
+                self._clip.loop_end = end
+                self._clip.start_marker = start
+                self._clip.end_marker = end
+            self._loop_start = start
+            self._loop_end = end
             self.update()
 
     # LoopSelector listener OK
@@ -160,7 +163,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                         else:
                             if self._is_velocity_shifted:  # FIX, see if can copy backwards
                                 self._extend_clip_content(
-                                    start * self._blocksize * self._quantization,
+                                    self._loop_start,
                                     self._loop_end,
                                     end * self._blocksize * self._quantization)
                             self.set_clip_loop(
@@ -176,23 +179,25 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                 self._last_button_idx = idx
 
     # Index check for page boundaries scroll OK
-    def can_scroll(self, blocks):
+    # _block counts loop selector buttons (blocks of _blocksize steps); a multinote page
+    # with N lines per note is N blocks, so scrolling moves N blocks per page.
+    def can_scroll(self, pages):
         if self._clip != None:
-            if (blocks + self._block) < 0:
+            per_page = self._number_of_lines_per_note
+            block = self._block + pages * per_page
+            if block < 0:
                 return False
-            if (
-                blocks + self._block) * 8 * self._quantization * self._number_of_lines_per_note < self._clip.loop_start:
+            if block * self._blocksize * self._quantization < self._clip.loop_start:
                 return False
-            if (
-                blocks + self._block + 1) * 8 * self._quantization * self._number_of_lines_per_note > self._clip.loop_end:
+            if (block + per_page) * self._blocksize * self._quantization > self._clip.loop_end:
                 return False
             return True
         return False
 
     # Does the actual scroll OK
-    def scroll(self, blocks):
-        if self._clip != None and self.can_scroll(blocks):
-            self._block = blocks + self._block
+    def scroll(self, pages):
+        if self._clip != None and self.can_scroll(pages):
+            self._block = self._block + pages * self._number_of_lines_per_note
             self._step_sequencer.set_page(self._block)
 
     # Iterates refreshing all loop selector buttons (called from playing position listener) OK
@@ -256,18 +261,20 @@ class LoopSelectorComponent(ControlSurfaceComponent):
 
     # Make a copy of the current loop to the next N empty blocks OK
     def _extend_clip_content(self, loop_start, old_loop_end, new_loop_end):
-        if (self._no_notes_in_range(old_loop_end, new_loop_end, True)):
+        # positions inside the loop are relative to loop_start
+        loop_length = old_loop_end - loop_start
+        if loop_length > 0 and self._no_notes_in_range(old_loop_end, new_loop_end, True):
             clip_looping_length = 0
-            if (old_loop_end > 1):
+            if (loop_length > 1):
                 power = 1
-                while (power * 2 < old_loop_end):
+                while (power * 2 < loop_length):
                     power *= 2
                 clip_looping_length = (power)
             clone_length = new_loop_end - old_loop_end
             if (clip_looping_length > 0):
-                clone_start_point = (old_loop_end % clip_looping_length)
+                clone_start_point = loop_start + (loop_length % clip_looping_length)
             else:
-                clone_start_point = 0
+                clone_start_point = loop_start
             self._copy_notes_in_range(clone_start_point,
                                       clone_start_point + clone_length,
                                       old_loop_end)
@@ -275,8 +282,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
     # Does the note by note copy OK
     def _copy_notes_in_range(self, start, end, new_start):
         new_notes = list(self._note_cache)
-        # for i in range()
-        for note in new_notes:
+        for note in self._note_cache:
             if note[1] >= start and note[1] < end:
                 new_notes.append(
                     [note[0], note[1] + new_start - start, note[2], note[3],
