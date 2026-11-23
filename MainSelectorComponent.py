@@ -15,10 +15,7 @@ from _Framework.SceneComponent import SceneComponent
 from .SpecialProSessionComponent import SpecialProSessionComponent
 import Live
 import time
-try:
-    from .Settings import Settings
-except ImportError:
-    from .Settings import *
+from .Settings import Settings
 
 # MIDI channel (0-15) of each user sub mode, by its name in Settings.USER_MODES_1/2
 SUB_MODE_CHANNELS = {

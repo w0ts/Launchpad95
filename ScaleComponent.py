@@ -1,10 +1,5 @@
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 import Live
-#fix for python3
-try:
-    xrange
-except NameError:
-    xrange = range
 
 KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 CIRCLE_OF_FIFTHS = [7 * k % 12 for k in range(12)]
@@ -26,8 +21,8 @@ class ScaleComponent(ControlSurfaceComponent):
 
 	def __init__(self, control_surface = None, enabled = False, mode = "diatonic", *a, **k):
 		self._layout_set = False
-		self._modus_list = [Modus(MUSICAL_MODES[v], MUSICAL_MODES[v + 1]) for v in xrange(0, len(MUSICAL_MODES), 2)]
-		self._modus_names = [MUSICAL_MODES[v] for v in xrange(0, len(MUSICAL_MODES), 2)]
+		self._modus_list = [Modus(MUSICAL_MODES[v], MUSICAL_MODES[v + 1]) for v in range(0, len(MUSICAL_MODES), 2)]
+		self._modus_names = [MUSICAL_MODES[v] for v in range(0, len(MUSICAL_MODES), 2)]
 		self._control_surface = control_surface
 		self._osd = None
 		self._modus = 0
@@ -507,7 +502,7 @@ class ScaleComponent(ControlSurfaceComponent):
 			origin = 0
 		elif self.is_diatonic:
 			origin = 0
-			for k in xrange(len(notes)):
+			for k in range(len(notes)):
 				if notes[k] >= 12:
 					origin = k - len(notes)
 					break
@@ -569,7 +564,7 @@ class MelodicPattern(object):
 			scale=range(12), 
 			base_note=0, 
 			origin=[0, 0], 
-			valid_notes=xrange(128), 
+			valid_notes=range(128), 
 			chromatic_mode=False,
 			chromatic_gtr_mode=False,
 			diatonic_ns_mode=False,

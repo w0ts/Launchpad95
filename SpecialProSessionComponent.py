@@ -15,10 +15,6 @@ from .SpecialSessionComponent import SpecialSessionComponent
 from .TargetTrackComponent import TargetTrackComponent
 _Q = Live.Song.Quantization
 Rec_Q = Live.Song.RecordingQuantization
-try:
-	xrange
-except NameError:
-	xrange = range
 	
 
 REC_QNTZ_RATES = [
@@ -646,10 +642,10 @@ class SpecialProSessionComponent(SpecialSessionComponent):
 		return self._record_quantization
 
 	def _setup_actions_buttons(self):
-		for scene_index in xrange(self._num_scenes):
+		for scene_index in range(self._num_scenes):
 			scene = self.scene(scene_index)
 			scene._set_parent(self)
-			for track_index in xrange(self._num_tracks):
+			for track_index in range(self._num_tracks):
 				slot = scene.clip_slot(track_index)
 				slot._set_parent(scene)
 
@@ -1083,9 +1079,9 @@ class SpecialProSessionComponent(SpecialSessionComponent):
 	def _update_stop_track_clip_buttons(self):
 		self._tap_button = None
 		if self.is_enabled():
-			for index in xrange(self._num_tracks):
+			for index in range(self._num_tracks):
 				self._update_stop_clips_led(index)
-			for index in xrange(8):
+			for index in range(8):
 				self._update_select_leds(index)  
 
 	def _update_stop_clips_led(self, index):

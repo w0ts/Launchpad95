@@ -4,10 +4,7 @@ import sys
 from .DeviceControllerStripProxy import DeviceControllerStripProxy
 import time
 import Live
-try:
-    from .Settings import Settings
-except ImportError:
-    from .Settings import *
+from .Settings import Settings
 
 
 class DeviceControllerComponent(DeviceComponent):
@@ -792,7 +789,7 @@ class DeviceControllerComponent(DeviceComponent):
 # utils
 
 # def tuple_idx(self, tuple, obj):
-#	for i in xrange(0, len(tuple)):
+#	for i in range(0, len(tuple)):
 #		if (tuple[i] == obj):
 #			return i
 #	return(False)

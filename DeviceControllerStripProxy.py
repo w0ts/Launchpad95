@@ -2,10 +2,7 @@ import traceback
 import time
 from threading import Thread
 from functools import partial
-try:
-    import Queue as queue
-except ModuleNotFoundError:
-    import queue
+import queue
 
 from .DeviceControllerStripServer import DeviceControllerStripServer
 from .Log import log

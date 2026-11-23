@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 import traceback
 
 import Live
@@ -12,16 +10,8 @@ from .MainSelectorComponent import MainSelectorComponent
 from .NoteRepeatComponent import NoteRepeatComponent
 from .M4LInterface import M4LInterface
 from .Log import log
-try:
-    from .Settings import Settings
-except ImportError:
-    from .Settings import *
+from .Settings import Settings
 
-#fix for python3
-try:
-    xrange
-except NameError:
-    xrange = range
 
 DO_COMBINE = Live.Application.combine_apcs()  # requires 8.2 & higher
 
@@ -337,7 +327,7 @@ class Launchpad(ControlSurface):
 		# mk3 and LPX
 		self._send_midi(SYSEX_IDENTITY_REQUEST_MESSAGE)
 		# mk2
-		challenge_bytes = tuple([ self._challenge >> 8 * index & 127 for index in xrange(4) ])
+		challenge_bytes = tuple([ self._challenge >> 8 * index & 127 for index in range(4) ])
 		self._send_midi((240, 0, 32, 41, 2, 24, 64) + challenge_bytes + (247,))
 		# mk1's
 		for index in range(4):

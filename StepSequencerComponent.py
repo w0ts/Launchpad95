@@ -5,20 +5,12 @@ from .NoteSelectorComponent import NoteSelectorComponent
 from _Framework.CompoundComponent import CompoundComponent
 from _Framework.ButtonElement import ButtonElement
 from _Framework.Util import find_if
-try:
-    from itertools import imap
-except ImportError:
-    # Python 3...
-    imap=map
 from .NoteEditorComponent import NoteEditorComponent
 from .ClipNotes import read_all_notes
 from .TrackControllerComponent import TrackControllerComponent
 import time
 from .ScaleComponent import ScaleComponent, MUSICAL_MODES, KEY_NAMES
-try:
-    from .Settings import Settings
-except ImportError:
-    from .Settings import *
+from .Settings import Settings
 # quantization button colours. this must remain of length 4.
 QUANTIZATION_MAP = [1, 0.5, 0.25, 0.125]  # 1/4 1/8 1/16 1/32
 QUANTIZATION_NAMES = ["1/4", "1/8", "1/16", "1/32"]
@@ -641,7 +633,7 @@ class StepSequencerComponent(CompoundComponent):
             if device.can_have_drum_pads:#device is a drum rack??
                 return device
             elif device.can_have_chains:#device is a rack??
-                return find_if(bool, imap(self.find_drum_group_device, device.chains))#recursive->returns the first drum rack item of the chain
+                return find_if(bool, map(self.find_drum_group_device, device.chains))#recursive->returns the first drum rack item of the chain
         else:
             return None
             

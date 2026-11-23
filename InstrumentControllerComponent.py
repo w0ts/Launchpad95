@@ -3,24 +3,11 @@ from _Framework.CompoundComponent import CompoundComponent
 from _Framework.SubjectSlot import subject_slot
 from _Framework.ButtonElement import ButtonElement
 from _Framework.Util import find_if, clamp
-try:
-	from itertools import imap
-except ImportError:
-	# Python 3...
-	imap=map
 	
 from .TrackControllerComponent import TrackControllerComponent
 from .ScaleComponent import ScaleComponent,CIRCLE_OF_FIFTHS,MUSICAL_MODES,KEY_NAMES
-try:
-	from .Settings import Settings
-except ImportError:
-	from .Settings import *
+from .Settings import Settings
 	
-#fix for python3
-try:
-	xrange
-except NameError:
-	xrange = range
 
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
 KEY_MODE = 0
@@ -517,7 +504,7 @@ class InstrumentControllerComponent(CompoundComponent):
 			if device.can_have_drum_pads:
 				return device
 			elif device.can_have_chains:
-				return find_if(bool, imap(self.find_drum_group_device, device.chains))
+				return find_if(bool, map(self.find_drum_group_device, device.chains))
 		else:
 			return None
 			
@@ -834,7 +821,7 @@ class InstrumentControllerComponent(CompoundComponent):
 			return "DrumGroup.PadFilled4"	
 
 	def tuple_idx(self, target_tuple, obj):
-		for i in xrange(0, len(target_tuple)):
+		for i in range(0, len(target_tuple)):
 			if (target_tuple[i] == obj):
 				return i
 		return(False)

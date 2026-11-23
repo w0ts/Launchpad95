@@ -7,10 +7,7 @@ from .SpecialMixerComponent import SpecialMixerComponent
 from .PreciseButtonSliderElement import (
 	PreciseButtonSliderElement, SLIDER_MODE_VOLUME, SLIDER_MODE_PAN
 )
-try:
-    from .Settings import Settings
-except ImportError:
-    from .Settings import *
+from .Settings import Settings
 
 
 def level_to_value(level):
