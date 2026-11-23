@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Fetch Ableton's _Framework (decompiled, from the gluon/AbletonLive1x_MIDIRemoteScripts
-# repositories) into <dest>, for running the Launchpad95 tests outside Live.
+# Fetch Ableton's _Framework (decompiled) into <dest>, for running the Launchpad95 tests
+# outside Live.
 #
 #   scripts/fetch_framework.sh <dest>
 #   ABLETON_FRAMEWORK_DIR=<dest> python -m pytest tests
 #
-# Pinned commits; the Live 11.2.11 tree is the base, three files (two do not parse there) come
-# from the Live 12 tree, and tests/framework.patch fixes decompiler bugs. Nothing from
-# Ableton is committed to this repository. Idempotent: does nothing when <dest> is up to
-# date with the pinned commits and the patch.
+# Source: the w0ts fork of gluon/AbletonLive11_MIDIRemoteScripts, branch
+# fix-decompiled-framework (Live 11.2.11 sources with decompiler bugs fixed), offered
+# upstream as https://github.com/gluon/AbletonLive11_MIDIRemoteScripts/pull/19.
+# Pinned to a commit. Nothing from Ableton is committed to this repository.
+# Idempotent: does nothing when <dest> already holds the pinned commit.
 set -euo pipefail
 
 if [ $# -ne 1 ]; then
@@ -17,23 +18,10 @@ if [ $# -ne 1 ]; then
 fi
 
 DEST=$1
-L11_REPO=https://github.com/gluon/AbletonLive11_MIDIRemoteScripts
-L11_SHA=6ec80666c81654518dc79f6bc5d2b4af50ca4ec3   # "Uncompyled 11.2.11"
-L12_REPO=https://github.com/gluon/AbletonLive12_MIDIRemoteScripts
-L12_SHA=e83d5192f321b24eb9daab843ac49a2d95d862b1
-# Files taken from the Live 12 tree (they do not parse in the Live 11 tree, or are
-# decompiled more faithfully there).
-L12_FILES="_Framework/ChannelStripComponent.py _Framework/ClipSlotComponent.py _Framework/SubjectSlot.py"
+REPO=https://github.com/w0ts/AbletonLive11_MIDIRemoteScripts
+SHA=272c3401c99a9881a2d6f66b2f62632886883c07   # fix-decompiled-framework
 
-REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
-PATCH=$REPO_ROOT/tests/framework.patch
-
-hash_file() {
-	if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi
-}
-
-STAMP="$L11_SHA $L12_SHA $L12_FILES $(hash_file "$PATCH")"
-if [ -f "$DEST/.framework-stamp" ] && [ "$(cat "$DEST/.framework-stamp")" = "$STAMP" ]; then
+if [ -f "$DEST/.framework-stamp" ] && [ "$(cat "$DEST/.framework-stamp")" = "$SHA" ]; then
 	echo "framework in $DEST is up to date"
 	exit 0
 fi
@@ -41,29 +29,18 @@ fi
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/lp95-framework.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 
-fetch() {
-	local dir=$1 repo=$2 sha=$3
-	git init -q "$dir"
-	git -C "$dir" fetch -q --depth 1 "$repo" "$sha"
-	git -C "$dir" -c advice.detachedHead=false checkout -q FETCH_HEAD
-}
-
-fetch "$WORK/l11" "$L11_REPO" "$L11_SHA"
-fetch "$WORK/l12" "$L12_REPO" "$L12_SHA"
+git init -q "$WORK/src"
+git -C "$WORK/src" fetch -q --depth 1 "$REPO" "$SHA"
+git -C "$WORK/src" -c advice.detachedHead=false checkout -q FETCH_HEAD
 
 OUT=$WORK/out
 mkdir -p "$OUT/ableton/v2"
-cp -R "$WORK/l11/_Framework" "$WORK/l11/_Generic" "$OUT/"
-cp "$WORK/l11/ableton/__init__.py" "$OUT/ableton/"
-cp "$WORK/l11/ableton/v2/__init__.py" "$OUT/ableton/v2/"
-cp -R "$WORK/l11/ableton/v2/base" "$OUT/ableton/v2/"
-for file in $L12_FILES; do
-	cp "$WORK/l12/$file" "$OUT/$file"
-done
+cp -R "$WORK/src/_Framework" "$WORK/src/_Generic" "$OUT/"
+cp "$WORK/src/ableton/__init__.py" "$OUT/ableton/"
+cp "$WORK/src/ableton/v2/__init__.py" "$OUT/ableton/v2/"
+cp -R "$WORK/src/ableton/v2/base" "$OUT/ableton/v2/"
 
-if [ -s "$PATCH" ]; then (cd "$OUT" && patch -p1 --forward --silent < "$PATCH"); fi
-
-echo "$STAMP" > "$OUT/.framework-stamp"
+echo "$SHA" > "$OUT/.framework-stamp"
 rm -rf "$DEST"
 mkdir -p "$(dirname "$DEST")"
 mv "$OUT" "$DEST"

@@ -19,12 +19,12 @@ Add `--cov` for the coverage of the script modules.
 The script imports Ableton's `_Framework` (plus `ableton.v2.base` and `_Generic`), which
 is not in this repository. `ABLETON_FRAMEWORK_DIR` points at one of:
 
-- **A fetched tree** (what CI uses): `scripts/fetch_framework.sh <dir>` clones pinned
-  commits of the decompiled scripts from gluon/AbletonLive11_MIDIRemoteScripts and
-  gluon/AbletonLive12_MIDIRemoteScripts, keeps only `_Framework`, `_Generic` and
-  `ableton/v2/base`, and applies `tests/framework.patch`. The patch fixes decompiler
-  mistakes (mostly mangled `if`/`while` conditions). Each fix was checked by compiling the
-  patched function and comparing its bytecode with the `.pyc` of an installed Live. The
+- **A fetched tree** (what CI uses): `scripts/fetch_framework.sh <dir>` clones a pinned
+  commit of [w0ts/AbletonLive11_MIDIRemoteScripts](https://github.com/w0ts/AbletonLive11_MIDIRemoteScripts/tree/fix-decompiled-framework)
+  (the Live 11.2.11 decompile with its decompiler mistakes fixed, offered upstream as
+  [gluon#19](https://github.com/gluon/AbletonLive11_MIDIRemoteScripts/pull/19)) and keeps
+  only `_Framework`, `_Generic` and `ableton/v2/base`. Each fix was checked by compiling
+  the function and comparing its bytecode with the `.pyc` of an installed Live. The
   script does nothing when `<dir>` is already up to date.
 - **An installed Live**: `ABLETON_FRAMEWORK_DIR="/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/MIDI Remote Scripts"`.
   Its `.pyc` files load in a Python 3.11 of the same minor version. Use this to check
