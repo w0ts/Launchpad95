@@ -72,8 +72,7 @@ GPL-3.0, see [LICENSE](LICENSE).
 
 Launchpad95 is by w0ts. It started from Ableton's Launchpad control surface scripts, and grew with contributions from
 Daniel Erceg, Pablo Torres ([Poltow](https://github.com/poltow), Pro Session and note repeat), Thomas Frössman,
-MrMatch246 (stepless sliders, clip scales) and others: see the commit history. François Lehérissier wrote the French
-manual.
+MrMatch246 (stepless sliders, clip scales) and others: see the commit history.
 
 ## Not affiliated with Novation or Ableton
 
