@@ -20,6 +20,16 @@ try:
 except ImportError:
     from .Settings import *
 
+# MIDI channel (0-15) of each user sub mode, by its name in Settings.USER_MODES_1/2
+SUB_MODE_CHANNELS = {
+	"instrument": 11,  # and the 4 next ones
+	"device": 3,
+	"user 1": 4,
+	"drum stepseq": 1,
+	"melodic stepseq": 2,
+	"user 2": 5,
+}
+
 class MainSelectorComponent(ModeSelectorComponent):
 
 	""" Class that reassigns the button on the launchpad to different functions """
@@ -50,6 +60,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 		self._pro_session_on = False
 		self._long_press = 500
 		self._last_session_mode_button_press = int(round(time.time() * 1000))
+		self._session_pressed_in_session = False
 		self._aux_scene = None
 		#Non-Matrix buttons
 		self._all_buttons = []
@@ -168,10 +179,13 @@ class MainSelectorComponent(ModeSelectorComponent):
 		session_mode_changed = False
 		new_mode = self._modes_buttons.index(sender)
 		now = int(round(time.time() * 1000))
-		if new_mode == 0 and self._last_mode_index == 0:
+		if new_mode == 0:
 			if value > 0:
+				# only a short tap while already in session toggles pro session
 				self._last_session_mode_button_press = now
-			else: 
+				self._session_pressed_in_session = self._last_mode_index == 0
+			elif self._session_pressed_in_session:
+				self._session_pressed_in_session = False
 				if now - self._last_session_mode_button_press < self._long_press:
 					self._pro_session_on = not self._pro_session_on
 					session_mode_changed = True
@@ -224,23 +238,13 @@ class MainSelectorComponent(ModeSelectorComponent):
 			new_channel = 0  # session
 
 		elif self._main_mode_index == 1:
-			if self._sub_mode_list[self._main_mode_index] == 0:
-				new_channel = 11  # instrument controller
+			new_channel = SUB_MODE_CHANNELS[Settings.USER_MODES_1[self._sub_mode_list[1]]]
+			if Settings.USER_MODES_1[self._sub_mode_list[1]] == "instrument" and self._instrument_controller != None:
 				# instrument controller uses base channel plus the 4 next ones. 11,12,13,14,15
-				if self._instrument_controller != None:
-					self._instrument_controller.base_channel = new_channel
-			elif self._sub_mode_list[self._main_mode_index] == 1:
-				new_channel = 3  # device controller
-			elif self._sub_mode_list[self._main_mode_index] == 2:
-				new_channel = 4  # plain user mode 1
+				self._instrument_controller.base_channel = new_channel
 
 		elif self._main_mode_index == 2:
-			if self._sub_mode_list[self._main_mode_index] == 0:
-				new_channel = 1  # step seq
-			elif self._sub_mode_list[self._main_mode_index] == 1:
-				new_channel = 2  # melodic step seq
-			elif self._sub_mode_list[self._main_mode_index] == 2:
-				new_channel = 5  # plain user mode 2
+			new_channel = SUB_MODE_CHANNELS[Settings.USER_MODES_2[self._sub_mode_list[2]]]
 
 		elif self._main_mode_index == 3:  # mixer modes
 			# mixer uses base channel 7 and the 4 next ones.

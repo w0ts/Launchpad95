@@ -80,7 +80,6 @@ def test_short_session_press_toggles_pro_session_and_long_press_does_not(rig):
 	assert not rig.selector._pro_session_on
 
 
-@pytest.mark.xfail(strict=True, reason="bug: MainSelectorComponent._mode_value does not record the press time when switching to session, so the release compares with a stale press and toggles pro session")
 def test_returning_to_session_quickly_keeps_pro_session_state(rig):
 	rig.tap_top(SESSION)  # short tap in session mode: pro session on
 	assert rig.selector._pro_session_on
@@ -88,3 +87,28 @@ def test_returning_to_session_quickly_keeps_pro_session_state(rig):
 	rig.tap_top(SESSION)  # back to session within 0.5 s of the first tap
 	assert rig.selector._main_mode_index == 0
 	assert rig.selector._pro_session_on
+
+
+@pytest.mark.parametrize("taps,channel", [((USER1,), 11), ((USER1, USER1), 3), ((USER2,), 1), ((USER2, USER2), 2), ((), 0)])
+def test_default_mode_channels(rig, taps, channel):
+	for button in taps:
+		rig.tap_top(button)
+		rig.tick()
+	assert rig.selector.channel_for_current_mode() == channel
+
+
+def test_mode_channels_follow_the_mode_not_its_position(make_rig, monkeypatch):
+	from harness.devices import LaunchpadX
+	from Launchpad95.Settings import Settings
+
+	monkeypatch.setattr(Settings, "USER_MODES_1", ["device", "instrument"])
+	monkeypatch.setattr(Settings, "USER_MODES_2", ["melodic stepseq", "drum stepseq"])
+	rig = make_rig(LaunchpadX)
+	rig.tap_top(USER1)
+	rig.tick()
+	assert rig.messages[-1] == "DEVICE CONTROLLER MODE"
+	assert rig.selector.channel_for_current_mode() == 3
+	rig.tap_top(USER2)
+	rig.tick()
+	assert rig.messages[-1] == "MELODIC SEQUENCER MODE"
+	assert rig.selector.channel_for_current_mode() == 2
