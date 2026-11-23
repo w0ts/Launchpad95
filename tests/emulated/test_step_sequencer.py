@@ -115,7 +115,6 @@ def test_selecting_another_scene_follows_its_clip(seq_rig):
 	assert clip(rig, 0, 0).note_tuples() == ()
 
 
-@pytest.mark.xfail(strict=True, reason="bug: StepSequencerComponent.on_clip_slot_changed removes the has_clip listener from the new slot instead of the old one, so old slots keep their listener")
 def test_switching_slots_releases_the_old_slot_listener(seq_rig):
 	rig = seq_rig
 	old_slot = rig.song.tracks[0].clip_slots[0]

@@ -511,8 +511,8 @@ class StepSequencerComponent(CompoundComponent):
 
         # update clip slot
         if clip_slot != self._clip_slot or self._clip_slot == None:
-            if clip_slot != None and clip_slot.has_clip_has_listener(self.on_clip_slot_has_clip_changed):
-                clip_slot.remove_has_clip_listener(self.on_clip_slot_has_clip_changed)
+            if self._clip_slot != None and self._clip_slot.has_clip_has_listener(self.on_clip_slot_has_clip_changed):
+                self._clip_slot.remove_has_clip_listener(self.on_clip_slot_has_clip_changed)
             self._clip_slot = clip_slot
             if self._clip_slot != None:
                 if self._clip_slot.has_clip_has_listener(self.on_clip_slot_has_clip_changed):
