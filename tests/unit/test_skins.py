@@ -77,6 +77,49 @@ def dynamic_keys(package):
     for column in range(8):
         keys += [f"Device.CustomSlider{column}.{part}" for part in ("On", "Off", "Third", "Half")]
     keys += [f"Device.ColorSteps.Step{step}" for step in range(10)]
+    keys += _on_off(*(f"Device.{kind}" for kind in ("Toggle", "Enum", "BigEnum", "PrecisionSlider", "DefaultSlider")))
+    keys += _pro_session_keys(package) + _instrument_keys(package) + _melodic_keys(package)
+    # StepSequencerButtons: lock colours (single-argument on/off values)
+    keys += [f"StepSequencer.Lock.{kind}.{state}" for kind in ("ToTrack", "ToClip") for state in ("On", "Off")]
+    return keys
+
+
+def _on_off(*names):
+    return [f"{name}.{state}" for name in names for state in ("On", "Off")]
+
+
+def _pro_session_keys(package):
+    """Side-button colours (SpecialProSessionComponent) and the bottom row (ProSessionBottomRow)."""
+    side = ("Undo", "Shift", "Click", "Quantize", "Double", "Delete", "Duplicate", "SessionRec", "SessionRecMode")
+    keys = _on_off(*(f"ProSession.{name}" for name in side))
+    keys += _on_off("Recording", "Mixer.Solo", "TrackController.Mute", "Metronome")
+    keys += [skin for skin in package.ProSessionBottomRow.TEMPO_SKINS if skin]
+    for prefix in ("LaunchQuant", "RecQuant", "FixedLength"):
+        keys += _on_off(prefix, prefix + ".PlusMinus") + [f"{prefix}.Value.{state}" for state in ("On", "Idle", "Off")]
+    return keys
+
+
+def _instrument_keys(package):
+    """InstrumentPads: quick-scale colours per scale family and the note-repeat controls."""
+    keys = list(package.InstrumentPads.SWING_SKINS)
+    for family in ("Major", "Minor", "Other"):
+        keys += _on_off(f"QuickScale.{family}.Key")
+        keys += [f"QuickScale.{family}.{part}" for part in ("CircleOfFifths", "Mode", "RelativeScale")]
+    keys += ["QuickScale.Quant.On", "QuickScale.Quant.Off", "QuickScale.Quant.Selected", "QuickScale.Quant.Note"]
+    keys += ["QuickScale.Quant.Tripplet", "QuickScale.Quant.Mode", "DrumGroup.PadFilled", "DrumGroup.PadEmpty"]
+    keys += _on_off("QuickScale.NoteRepeater", "QuickScale.Modus")
+    keys += [f"Note.Pads.{kind}" for kind in ("Root", "Highlight", "InScale", "OutOfScale", "Invalid")]
+    return keys
+
+
+def _melodic_keys(package):
+    """MelodicNoteEditorComponent: page colours, value pages and the playhead."""
+    keys = []
+    skins = [skin for _, skin, _ in package.MelodicNoteEditorComponent.VALUE_PAGES.values()]
+    for skin in skins + ["StepSequencer2.Pitch"]:
+        keys += [f"{skin}.{state}" for state in ("On", "Off", "Dim")]
+    for where in ("InPage", "InOtherPage"):
+        keys += [f"StepSequencer2.NoteEditor.Metronome{where}", f"StepSequencer2.NoteEditor.Play{where}"]
     return keys
 
 
