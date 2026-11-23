@@ -126,9 +126,9 @@ class InstrumentControllerComponent(CompoundComponent):
 			self._remove_scale_listeners()
 		else:
 			self._control_surface.set_controlled_track(self._track_controller.selected_track)
+			self._register_scale_listeners()
 
 		if self._track_controller != None:
-			self._register_scale_listeners()
 			self._track_controller._do_implicit_arm(enabled)
 			self._track_controller.set_enabled(enabled)
 			

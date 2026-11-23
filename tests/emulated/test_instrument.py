@@ -167,3 +167,14 @@ def test_quick_scale_turns_the_top_rows_into_scale_buttons(instrument_rig):
 	assert rig.press(1, 1) == "script"  # top rows: key / mode buttons
 	rig.release(1, 1)
 	assert rig.song.root_note != 0 or rig.song.scale_name != "Major"
+
+
+def test_leaving_instrument_mode_stops_following_the_song_scale(instrument_rig):
+	rig = instrument_rig
+	controller = rig.selector._instrument_controller
+	assert rig.song.root_note_has_listener(controller.handle_root_note_changed)
+	rig.tap_top(4)  # session
+	rig.tick(2)
+	assert not controller.is_enabled()
+	assert not rig.song.root_note_has_listener(controller.handle_root_note_changed)
+	assert not rig.song.scale_name_has_listener(controller.handle_scale_name_changed)
