@@ -35,7 +35,7 @@ class DeviceControllerStripProxy():
     def __getattr__(self, item):
         #log(f'Proxy{self.column}: __getattr__ {item}')
         if self.failed:
-            return
+            raise AttributeError("device strip %s failed: no %s" % (self.column, item))
         if item in non_returns:
             return partial(self._call_non_return_handler, item)
         elif item in returning:
@@ -43,6 +43,10 @@ class DeviceControllerStripProxy():
         else:
             #log(f'Proxy{self.column}: __getattr__ {item} not found !!!!!!!!!')
             return partial(self._call_non_return_handler, item)
+
+    def shutdown(self):
+        # also for a failed strip: its thread may still be running
+        self._call_non_return_handler("shutdown")
 
     def _call_non_return_handler(self, name, *args, **kwargs):
         self.request_id += 1
@@ -55,15 +59,13 @@ class DeviceControllerStripProxy():
         try:
             while True:
                 token, response = self._response_queue.get(timeout=10)
+                if response == "ERROR":
+                    # the strip's run loop died: it will never answer
+                    self.failed = True
+                    return None
                 if token == current_id:
                     break
-                else:
-                    #log(f'Proxy{self.column}: got old response {token} {response} instead of {current_id}')
-                    pass
-                if response =="ERROR":
-                    #log(f'Proxy{self.column}: RunLoop Died!!!!!!')
-                    self.failed = True
-                time.sleep(0.01)
+                # else: an old response, keep waiting for ours
             if response == 'None' and False:
                 return None
             return response

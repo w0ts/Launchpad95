@@ -80,3 +80,72 @@ def test_device_controller_threads_stop_on_disconnect(device_rig):
 	for thread in server_threads:
 		thread.join(timeout=5)
 	assert not any(t.is_alive() for t in server_threads)
+
+
+def rack_song(first_chain_devices=(), last_chain_devices=()):
+	song = make_song()
+	track = song.tracks[0]
+	rack = Live.RackDevice.RackDevice(name="Rack", chains=(Live.Chain.Chain(name="A", devices=first_chain_devices),
+		Live.Chain.Chain(name="B", devices=last_chain_devices)))
+	after = Live.Device.Device(name="After")
+	for device in (rack, after):
+		device.canonical_parent = track
+	track.devices = (rack, after)
+	return song, rack, after
+
+
+def test_rack_navigation_with_empty_chains(make_rig):
+	from harness.devices import LaunchpadX
+
+	song, rack, after = rack_song()
+	rig = make_rig(LaunchpadX, song=song)
+	controller = rig.selector._device_controller
+	assert controller._get_next_device(rack) is after
+	assert controller._get_previous_device(after) is rack
+
+
+def test_device_track_name_walks_up_from_a_rack_chain(make_rig):
+	from harness.devices import LaunchpadX
+
+	inner = Live.Device.Device(name="Inner")
+	song, rack, after = rack_song(first_chain_devices=(inner,))
+	song.tracks[0].name = "Bass"
+	rig = make_rig(LaunchpadX, song=song)
+	assert rig.selector._device_controller.get_device_track_name(inner) == "Bass"
+
+
+def test_device_change_outside_device_mode_leaves_the_detail_view(make_rig):
+	from harness.devices import LaunchpadX
+
+	song, device = song_with_device()
+	rig = make_rig(LaunchpadX, song=song)
+	view = Live.Application.get_application().view
+	view.show_view("Detail/Clip")
+	song.appointed_device = device
+	rig.tick()
+	assert view.is_view_visible("Detail/Clip")
+
+
+def test_entering_device_mode_shows_the_device_chain(make_rig):
+	from harness.devices import LaunchpadX
+
+	song, device = song_with_device()
+	rig = make_rig(LaunchpadX, song=song)
+	song.appointed_device = device
+	view = Live.Application.get_application().view
+	view.show_view("Detail/Clip")
+	rig.tap_top(USER1)
+	rig.tap_top(USER1)
+	rig.tick(2)
+	assert view.is_view_visible("Detail/DeviceChain")
+
+
+def test_disconnect_with_a_failed_strip_still_stops_every_thread(device_rig):
+	rig = device_rig
+	sliders = rig.selector._device_controller._sliders
+	sliders[0].failed = True  # its server stopped answering
+	threads = [s._server_process for s in sliders]
+	rig.disconnect()
+	for thread in threads:
+		thread.join(timeout=5)
+	assert not any(t.is_alive() for t in threads)

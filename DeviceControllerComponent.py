@@ -105,7 +105,6 @@ class DeviceControllerComponent(DeviceComponent):
             'Detail/Clip', self._on_views_changed)
         self._control_surface.set_device_component(None)
         self.song().remove_appointed_device_listener(self._on_device_changed)
-        # LiveDeviceComponent.disconnect(self)
         self._prev_track_button = None
         self._next_track_button = None
         self._prev_device_button = None
@@ -117,7 +116,12 @@ class DeviceControllerComponent(DeviceComponent):
         # self._remaining_buttons = None UNUSED
         self._device = None
         for slider in self._sliders:
-            slider.shutdown()
+            if not slider.failed:
+                slider.release_parameter()
+            slider.shutdown()  # queued after the release; also stops a failed strip
+        # the strips are released and stopped: the framework must not call them again
+        self._parameter_controls = None
+        DeviceComponent.disconnect(self)
 
     def set_matrix(self, matrix):
         self._matrix = matrix
@@ -144,6 +148,8 @@ class DeviceControllerComponent(DeviceComponent):
         if active:
             self._force = True
             self.on_selected_track_changed()
+            if self._device is not None:
+                self.set_device_view()
         # disable matrix.
         for slider in self._sliders:
             temp=slider.set_enabled(active)
@@ -236,7 +242,8 @@ class DeviceControllerComponent(DeviceComponent):
             if self._bank_index is None or self._number_of_parameter_banks() <= self._bank_index:
                 self._bank_index = 0
             self._device = device
-            self.set_device_view()
+            if self.is_enabled():
+                self.set_device_view()
             DeviceComponent.set_device(self, device)
 
     def set_device_view(self):
@@ -426,10 +433,9 @@ class DeviceControllerComponent(DeviceComponent):
             self.update_lock_buttons()
 
     def get_device_track_name(self, device):
-        if str(type(device)) == "<class 'Track.Track'>":
-            return str(device.name)
-        else:
-            return self.get_device_track_name(device.canonical_parent)
+        while device is not None and not isinstance(device, Live.Track.Track):
+            device = getattr(device, "canonical_parent", None)
+        return str(device.name) if device is not None else ""
 
     # Precision button
     def update_mode_toggle_button(self):
@@ -685,7 +691,7 @@ class DeviceControllerComponent(DeviceComponent):
         if device is None:
             return self.selected_track().devices[0] if len(self.selected_track().devices) > 0 else None
         if isinstance(device, Live.Device.Device):
-            if device.can_have_chains and len(device.chains) > 0:
+            if device.can_have_chains and len(device.chains) > 0 and len(device.chains[0].devices) > 0:
                 return device.chains[0].devices[0]
             else:
                 next_device = self._get_next_sibling_device(device)
@@ -717,8 +723,6 @@ class DeviceControllerComponent(DeviceComponent):
                 return devices[index + 1]
             elif isinstance(parent.canonical_parent, Live.Device.Device):
                 return self._get_next_sibling_device(parent.canonical_parent)
-            elif isinstance(parent.canonical_parent, Live.Track.Track):
-                return self._get_next_device(None)
         return None
         
     def _get_previous_sibling_device(self, device):
@@ -732,7 +736,7 @@ class DeviceControllerComponent(DeviceComponent):
         
     def _get_last_device_in_chain(self, device):
         if isinstance(device, Live.Device.Device):
-            if device.can_have_chains and len(device.chains) > 0:
+            if device.can_have_chains and len(device.chains) > 0 and len(device.chains[-1].devices) > 0:
                 return self._get_last_device_in_chain(device.chains[-1].devices[-1])
             else:
                 return device

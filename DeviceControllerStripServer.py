@@ -146,7 +146,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
             if self._is_quantized:
                 if self._range == 1:
                     return SLIDER_MODE_TOGGLE
-                elif self._range <= self._num_buttons:
+                elif self._range < self._num_buttons:  # range + 1 values, one per button
                     return SLIDER_MODE_SMALL_ENUM
                 else:
                     return SLIDER_MODE_BIG_ENUM
@@ -534,7 +534,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
 
         except Exception as e:
             log("Run-Loop Exception in DCSServer " + str(
-                self._column) + ": Type " + type(e) + "\n " + str(e))
+                self._column) + ": Type " + str(type(e)) + "\n " + str(e))
             log(traceback.format_stack())
             log(traceback.format_exc())
             self._response_queue.put((0, "ERROR"))
@@ -692,9 +692,13 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
             return True
         if self._last_value_map_index == -1:
             return True
-        if (self._value // self._value_map[1]) != self._last_value_map_index:
-            return True
-        return False
+        # same window test as _update_slider, on the normalized value
+        normalized = (self._value - self._min) / self._range if self._range else 0.0
+        index = 0
+        for i, threshold in enumerate(self._value_map):
+            if normalized >= threshold:
+                index = i
+        return index != self._last_value_map_index
 
     def __ne__(self, other):
         return not self == other
