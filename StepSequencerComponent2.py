@@ -1,4 +1,3 @@
-import time
 from random import randrange
 
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
@@ -7,7 +6,8 @@ from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from .ClipNotes import write_all_notes
 from .LoopSelectorComponent import LoopSelectorComponent
 from .NoteSelectorComponent import NoteSelectorComponent
-from .StepSequencerComponent import ButtonElement, StepSequencerComponent
+from .PressButton import PressButton, ignore
+from .StepSequencerComponent import StepSequencerComponent
 from .TrackControllerComponent import TrackControllerComponent
 
 STEPSEQ_MODE_NOTES = 1
@@ -22,6 +22,8 @@ PAGE_NAMES = {
 }
 
 LONG_BUTTON_PRESS = 1.0
+# Two releases of the pitch button closer than this toggle mono/poly.
+MONO_DOUBLE_TAP = 0.5
 
 LANES = 7  # scale degrees shown, one per row
 OCTAVES = 7  # octave index 0..6 = octave offset -2..+4
@@ -100,40 +102,31 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
         # MODE
         self._mode = STEPSEQ_MODE_NOTES
 
-        # buttons
-        self._random_button = None
-        self.set_random_button(self._side_buttons[3])
-
-        self._mode_notes_lengths_button = None
-        self.set_mode_notes_lengths_button(self._side_buttons[4])
-        self._is_notes_lengths_shifted = False
-        self._last_notes_lengths_button_press = time.time()
-
-        self._mode_notes_octaves_button = None
-        self.set_mode_notes_octaves_button(self._side_buttons[5])
-        self._is_octave_shifted = False
-        self._last_notes_octaves_button_press = time.time()
-
-        self._mode_notes_velocities_button = None
-        self.set_mode_notes_velocities_button(self._side_buttons[6])
-        self._is_notes_velocity_shifted = False
-        self._last_notes_velocity_button_press = time.time()
-
-        self._mode_notes_pitches_button = None
-        self.set_mode_notes_pitches_button(self._side_buttons[7])
-        self._is_notes_pitches_shifted = False
-        self._last_notes_pitches_button_press = time.time()
-
+        # side buttons: 3 random; 4-7 pages (held: edit every step of the loop at once)
         self._is_velocity_shifted = False
         self._is_mute_shifted = False
+        self._random_button = self._side_button(
+            3, self._on_random_press, self._on_random_release, self._paint_random_button
+        )
+        self._lengths_button = self._page_button(4, STEPSEQ_MODE_NOTES_LENGTHS, "StepSequencer2.Length", "length")
+        self._octaves_button = self._page_button(5, STEPSEQ_MODE_NOTES_OCTAVES, "StepSequencer2.Octave", "octave")
+        self._velocities_button = self._page_button(
+            6,
+            STEPSEQ_MODE_NOTES_VELOCITIES,
+            "StepSequencer2.Velocity",
+            "velocity",
+            on_press=self._on_velocities_press,
+            refresh=self._on_velocities_changed,
+        )
+        self._pitches_button = self._page_button(
+            7, STEPSEQ_MODE_NOTES, "StepSequencer2.Pitch", "pitch", on_press=self._on_pitches_press
+        )
 
     def disconnect(self):
         self._step_sequencer = None
         self._matrix = None
-        self._mode_notes_lengths_button = None
-        self._mode_notes_octaves_button = None
-        self._mode_notes_velocities_button = None
-        self._mode_notes_pitches_button = None
+        for press_button in self._side_press_buttons():
+            press_button.set_button(None)
         self._notes_pitches = None
         self._notes_velocities = None
         self._notes_octaves = None
@@ -334,11 +327,8 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
         if force:
             self._force_update = True
         if self.is_enabled():
-            self._update_mode_notes_octaves_button()
-            self._update_mode_notes_lengths_button()
-            self._update_mode_notes_velocities_button()
-            self._update_mode_notes_pitches_button()
-            self._update_random_button()
+            for press_button in self._side_press_buttons():
+                press_button.update()
             self._update_matrix()
 
     def request_display_page(self):
@@ -498,7 +488,7 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
 
                 if ((value != 0) or (not is_momentary)) and y < 7:
                     if self._mode == STEPSEQ_MODE_NOTES:
-                        if self._is_notes_pitches_shifted:
+                        if self._pitches_button.held:
                             for x in range(start, end):
                                 for yy in range(7):
                                     self._notes_pitches[(x) * 7 + 6 - yy] = 0
@@ -514,7 +504,7 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
                                         self._notes_pitches[(x + 8 * self._page) * 7 + 6 - yy] = 0
                                 self._notes_pitches[(x + 8 * self._page) * 7 + 6 - y] = 1
                     elif self._mode == STEPSEQ_MODE_NOTES_OCTAVES:
-                        if self._is_notes_octaves_shifted:
+                        if self._octaves_button.held:
                             if x < 4:
                                 for x in range(start, end):
                                     self._notes_octaves[x] = 6 - y
@@ -527,7 +517,7 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
                         else:
                             self._notes_octaves[x + 8 * self._page] = 6 - y
                     elif self._mode == STEPSEQ_MODE_NOTES_VELOCITIES:
-                        if self._is_notes_velocities_shifted:
+                        if self._velocities_button.held:
                             if x < 4:
                                 for x in range(start, end):
                                     self._notes_velocities[x] = 6 - y
@@ -541,7 +531,7 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
                         else:
                             self._notes_velocities[x + 8 * self._page] = 6 - y
                     elif self._mode == STEPSEQ_MODE_NOTES_LENGTHS:
-                        if self._is_notes_lengths_shifted:
+                        if self._lengths_button.held:
                             if x < 4:
                                 for x in range(start, end):
                                     self._notes_lengths[x] = 6 - y
@@ -555,38 +545,6 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
                             self._notes_lengths[x + 8 * self._page] = 6 - y
                     self._update_matrix()
                     self._update_clip_notes()
-
-    # RANDOM
-    def _update_random_button(self):
-        if self.is_enabled():
-            if self._random_button != None:
-                if self._clip != None:
-                    self._random_button.set_on_off_values("StepSequencer2.Random.On", "StepSequencer2.Random.Off")
-                    self._random_button.turn_off()
-                else:
-                    self._random_button.set_light("DefaultButton.Disabled")
-
-    def set_random_button(self, button):
-        assert isinstance(button, (ButtonElement, type(None)))
-        if self._random_button != button:
-            if self._random_button != None:
-                self._random_button.remove_value_listener(self._random_button_value)
-            self._random_button = button
-            if self._random_button != None:
-                assert isinstance(button, ButtonElement)
-                self._random_button.add_value_listener(self._random_button_value, identify_sender=True)
-
-    def _random_button_value(self, value, sender):
-        assert self._random_button != None
-        assert value in range(128)
-        if self.is_enabled() and self._clip != None:
-            self._random_button.set_on_off_values("StepSequencer2.Random.On", "StepSequencer2.Random.Off")
-            if (value == 0) and (sender.is_momentary()):
-                self._random_button.turn_off()
-                self._control_surface.show_message("randomise")
-                self._randomise()
-            else:
-                self._random_button.turn_on()
 
     def _randomise(self):
         start = int(self._clip.loop_start / self._quantization)
@@ -616,183 +574,87 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
 
         self._update_clip_notes()
 
-    # PITCHES
-    def _update_mode_notes_pitches_button(self):
-        if self.is_enabled():
-            if self._mode_notes_pitches_button != None:
+    # SIDE BUTTONS
+    def _side_button(self, index, on_press, on_release, paint, refresh=None):
+        press_button = PressButton(self._has_clip, on_press, on_release, paint, refresh)
+        press_button.set_button(self._side_buttons[index])
+        return press_button
+
+    def _has_clip(self):
+        return self.is_enabled() and self._clip != None
+
+    def _side_press_buttons(self):
+        return (
+            self._octaves_button,
+            self._lengths_button,
+            self._velocities_button,
+            self._pitches_button,
+            self._random_button,
+        )
+
+    def _page_button(self, index, mode, skin, message, on_press=ignore, refresh=None):
+        """A page button: lit on its page; a release shows the page."""
+
+        def paint(button):
+            if self.is_enabled():
                 if self._clip != None:
-                    self._mode_notes_pitches_button.set_on_off_values(
-                        "StepSequencer2.Pitch.On", "StepSequencer2.Pitch.Dim"
-                    )
-                    if self._mode == STEPSEQ_MODE_NOTES:
-                        self._mode_notes_pitches_button.turn_on()
+                    button.set_on_off_values(skin + ".On", skin + ".Dim")
+                    if self._mode == mode:
+                        button.turn_on()
                     else:
-                        self._mode_notes_pitches_button.turn_off()
+                        button.turn_off()
                 else:
-                    self._mode_notes_pitches_button.set_on_off_values(
-                        "DefaultButton.Disabled", "DefaultButton.Disabled"
-                    )
-                    self._mode_notes_pitches_button.turn_off()
+                    button.set_light("DefaultButton.Disabled")
 
-    def set_mode_notes_pitches_button(self, button):
-        assert isinstance(button, (ButtonElement, type(None)))
-        if self._mode_notes_pitches_button != button:
-            if self._mode_notes_pitches_button != None:
-                self._mode_notes_pitches_button.remove_value_listener(self._mode_button_notes_pitches_value)
-            self._mode_notes_pitches_button = button
-            if self._mode_notes_pitches_button != None:
-                assert isinstance(button, ButtonElement)
-                self._mode_notes_pitches_button.add_value_listener(
-                    self._mode_button_notes_pitches_value, identify_sender=True
-                )
+        def on_release(press_button, now):
+            self._on_page_release(press_button, now, mode, message)
 
-    def _mode_button_notes_pitches_value(self, value, sender):
-        assert self._mode_notes_pitches_button != None
-        assert value in range(128)
-        if self.is_enabled() and self._clip != None:
-            if (value == 0) and (sender.is_momentary()):
-                self._is_notes_pitches_shifted = False
-                self._is_mute_shifted = False
-                self._is_velocity_shifted = False
-                self._is_notes_pitches_shifted = False
-                if time.time() - self._last_notes_pitches_button_press < 0.500:
-                    self._is_monophonic = not self._is_monophonic
-                    self._update_clip_notes()
-                    self._step_sequencer._update_OSD()
-                else:
-                    self.set_mode(STEPSEQ_MODE_NOTES)
-                    self._control_surface.show_message("pitch")
-                    self.update()
-                    self._step_sequencer._update_OSD()
-                self._last_notes_pitches_button_press = time.time()
-            else:
-                self._is_notes_pitches_shifted = True
-                self._is_mute_shifted = True
-                self._is_velocity_shifted = True
-                self._is_notes_pitches_shifted = True
+        return self._side_button(index, on_press, on_release, paint, refresh)
 
-    # OCTAVES
-    def _update_mode_notes_octaves_button(self):
-        if self.is_enabled():
-            if self._mode_notes_octaves_button != None:
-                if self._clip != None:
-                    self._mode_notes_octaves_button.set_on_off_values(
-                        "StepSequencer2.Octave.On", "StepSequencer2.Octave.Dim"
-                    )
-                    if self._mode == STEPSEQ_MODE_NOTES_OCTAVES:
-                        self._mode_notes_octaves_button.turn_on()
-                    else:
-                        self._mode_notes_octaves_button.turn_off()
-                else:
-                    self._mode_notes_octaves_button.set_light("DefaultButton.Disabled")
-
-    def set_mode_notes_octaves_button(self, button):
-        assert isinstance(button, (ButtonElement, type(None)))
-        if self._mode_notes_octaves_button != button:
-            if self._mode_notes_octaves_button != None:
-                self._mode_notes_octaves_button.remove_value_listener(self._mode_button_notes_octaves_value)
-            self._mode_notes_octaves_button = button
-            if self._mode_notes_octaves_button != None:
-                assert isinstance(button, ButtonElement)
-                self._mode_notes_octaves_button.add_value_listener(
-                    self._mode_button_notes_octaves_value, identify_sender=True
-                )
-
-    def _mode_button_notes_octaves_value(self, value, sender):
-        assert self._mode_notes_octaves_button != None
-        assert value in range(128)
-        if self.is_enabled() and self._clip != None:
-            if (value == 0) and (sender.is_momentary()):
-                self._is_notes_octaves_shifted = False
-                self.set_mode(STEPSEQ_MODE_NOTES_OCTAVES)
-                self._control_surface.show_message("octave")
-                self.update()
+    def _on_page_release(self, press_button, now, mode, message):
+        if mode == STEPSEQ_MODE_NOTES:
+            self._is_mute_shifted = False
+            self._is_velocity_shifted = False
+            if press_button.since_release(now) < MONO_DOUBLE_TAP:
+                self._is_monophonic = not self._is_monophonic
+                self._update_clip_notes()
                 self._step_sequencer._update_OSD()
-            else:
-                self._is_notes_octaves_shifted = True
+                return
+        elif mode == STEPSEQ_MODE_NOTES_VELOCITIES:
+            self._is_mute_shifted = False
+        self.set_mode(mode)
+        self._control_surface.show_message(message)
+        self.update()
+        self._step_sequencer._update_OSD()
 
-    # VELOCITIES
-    def _update_mode_notes_velocities_button(self):
+    def _on_pitches_press(self, press_button, now):
+        self._is_mute_shifted = True
+        self._is_velocity_shifted = True
+
+    def _on_velocities_press(self, press_button, now):
+        self._is_mute_shifted = True
+
+    def _on_velocities_changed(self):
+        self._step_sequencer._is_mute_shifted = self._is_mute_shifted
+
+    # RANDOM
+    def _paint_random_button(self, button):
         if self.is_enabled():
-            if self._mode_notes_velocities_button != None:
-                if self._clip != None:
-                    self._mode_notes_velocities_button.set_on_off_values(
-                        "StepSequencer2.Velocity.On", "StepSequencer2.Velocity.Dim"
-                    )
-                    if self._mode == STEPSEQ_MODE_NOTES_VELOCITIES:
-                        self._mode_notes_velocities_button.turn_on()
-                    else:
-                        self._mode_notes_velocities_button.turn_off()
-                else:
-                    self._mode_notes_velocities_button.set_light("DefaultButton.Disabled")
-
-    def set_mode_notes_velocities_button(self, button):
-        assert isinstance(button, (ButtonElement, type(None)))
-        if self._mode_notes_velocities_button != button:
-            if self._mode_notes_velocities_button != None:
-                self._mode_notes_velocities_button.remove_value_listener(self._mode_button_notes_velocities_value)
-            self._mode_notes_velocities_button = button
-            if self._mode_notes_velocities_button != None:
-                assert isinstance(button, ButtonElement)
-                self._mode_notes_velocities_button.add_value_listener(
-                    self._mode_button_notes_velocities_value, identify_sender=True
-                )
-
-    def _mode_button_notes_velocities_value(self, value, sender):
-        assert self._mode_notes_velocities_button != None
-        assert value in range(128)
-        if self.is_enabled() and self._clip != None:
-            if (value == 0) and (sender.is_momentary()):
-                self._is_mute_shifted = False
-                self._is_notes_velocities_shifted = False
-                self.set_mode(STEPSEQ_MODE_NOTES_VELOCITIES)
-                self._control_surface.show_message("velocity")
-                self.update()
-                self._step_sequencer._update_OSD()
+            if self._clip != None:
+                button.set_on_off_values("StepSequencer2.Random.On", "StepSequencer2.Random.Off")
+                button.turn_off()
             else:
-                self._is_mute_shifted = True
-                self._is_notes_velocities_shifted = True
-            self._step_sequencer._is_mute_shifted = self._is_mute_shifted
+                button.set_light("DefaultButton.Disabled")
 
-    # LENGTHS
-    def _update_mode_notes_lengths_button(self):
-        if self.is_enabled():
-            if self._mode_notes_lengths_button != None:
-                if self._clip != None:
-                    self._mode_notes_lengths_button.set_on_off_values(
-                        "StepSequencer2.Length.On", "StepSequencer2.Length.Dim"
-                    )
-                    if self._mode == STEPSEQ_MODE_NOTES_LENGTHS:
-                        self._mode_notes_lengths_button.turn_on()
-                    else:
-                        self._mode_notes_lengths_button.turn_off()
-                else:
-                    self._mode_notes_lengths_button.set_light("DefaultButton.Disabled")
+    def _on_random_press(self, press_button, now):
+        press_button.button.set_on_off_values("StepSequencer2.Random.On", "StepSequencer2.Random.Off")
+        press_button.button.turn_on()
 
-    def set_mode_notes_lengths_button(self, button):
-        assert isinstance(button, (ButtonElement, type(None)))
-        if self._mode_notes_lengths_button != button:
-            if self._mode_notes_lengths_button != None:
-                self._mode_notes_lengths_button.remove_value_listener(self._mode_button_notes_lengths_value)
-            self._mode_notes_lengths_button = button
-            if self._mode_notes_lengths_button != None:
-                assert isinstance(button, ButtonElement)
-                self._mode_notes_lengths_button.add_value_listener(
-                    self._mode_button_notes_lengths_value, identify_sender=True
-                )
-
-    def _mode_button_notes_lengths_value(self, value, sender):
-        assert self._mode_notes_lengths_button != None
-        assert value in range(128)
-        if self.is_enabled() and self._clip != None:
-            if (value == 0) and (sender.is_momentary()):
-                self._is_notes_lengths_shifted = False
-                self.set_mode(STEPSEQ_MODE_NOTES_LENGTHS)
-                self.update()
-                self._control_surface.show_message("length")
-                self._step_sequencer._update_OSD()
-            else:
-                self._is_notes_lengths_shifted = True
+    def _on_random_release(self, press_button, now):
+        press_button.button.set_on_off_values("StepSequencer2.Random.On", "StepSequencer2.Random.Off")
+        press_button.button.turn_off()
+        self._control_surface.show_message("randomise")
+        self._randomise()
 
 
 class StepSequencerComponent2(StepSequencerComponent):
@@ -865,10 +727,10 @@ class StepSequencerComponent2(StepSequencerComponent):
         page = PAGE_NAMES.get(editor._mode, " ")
         return (("Polyphony", "Mono" if editor._is_monophonic else "Poly"), ("Page", page))
 
-    def _update_mode_button(self):
+    def _paint_mode_button(self, button):
         if self.is_enabled():
-            if self._mode_button != None:
-                self._mode_button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
+            # side button 3 is the melodic editor's random button
+            button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
 
-    def _mode_button_value(self, value, sender):
+    def _on_mode_release(self, press_button, now):
         pass

@@ -11,11 +11,13 @@ session record, held + pad arms and launches, shift + record toggles autorecord)
 The bottom row while one is held: ProSessionBottomRow. The pads: SpecialClipSlotComponent.
 """
 
+from types import SimpleNamespace
+
 import Live
 from _Framework import Task
 from _Framework.SubjectSlot import subject_slot_group
 
-from .ModifierButton import ModifierButton, modifier_table
+from .PressButton import PressButton, ignore, lit_painter
 from .ProSessionBottomRow import ProSessionBottomRow
 from .ProSessionSettings import (
     LAUNCH_QNTZ_RATES,
@@ -97,6 +99,7 @@ class SpecialProSessionComponent(ProSessionBottomRow, SpecialSessionComponent):
         self.modifiers = self._make_modifiers()
         for modifier, button in zip(self.modifiers.all, self._side_buttons, strict=True):
             modifier.set_button(button)
+            button.turn_off()
         self.update()
 
     def _make_modifiers(self):
@@ -105,12 +108,11 @@ class SpecialProSessionComponent(ProSessionBottomRow, SpecialSessionComponent):
 
         def modifier(skin, is_lit, on_press, on_release, refresh=self.update, tracks_held=True):
             skin_name = skin if callable(skin) else (lambda: skin)
-            return ModifierButton(
-                self._is_pro_active, skin_name, is_lit, on_press, on_release, refresh, tracks_held=tracks_held
-            )
+            paint = lit_painter(self._is_pro_active, skin_name, is_lit)
+            return PressButton(self._is_pro_active, on_press, on_release, paint, refresh, tracks_held=tracks_held)
 
         undo = modifier(
-            "ProSession.Undo", lambda: song().can_undo, _ignore, self._on_undo_release, refresh=lambda: undo.update()
+            "ProSession.Undo", lambda: song().can_undo, ignore, self._on_undo_release, refresh=lambda: undo.update()
         )
         held_modifiers = (
             ("shift", "ProSession.Shift", self._is_shift_lit, self._on_shift_press, self._on_shift_release),
@@ -135,9 +137,10 @@ class SpecialProSessionComponent(ProSessionBottomRow, SpecialSessionComponent):
         record = modifier(
             self._record_skin, self._is_recording, self._on_record_press, self._on_record_release, tracks_held=False
         )
-        return modifier_table(
-            ("undo", undo), *((name, modifier(*row)) for name, *row in held_modifiers), ("record", record)
-        )
+        table = (("undo", undo), *((name, modifier(*row)) for name, *row in held_modifiers), ("record", record))
+        modifiers = SimpleNamespace(**dict(table))
+        modifiers.all = tuple(press_button for _, press_button in table)
+        return modifiers
 
     def disconnect(self):
         self._song.remove_clip_trigger_quantization_listener(self._on_clip_trigger_quantization_changed_in_live)
@@ -442,7 +445,3 @@ class SpecialProSessionComponent(ProSessionBottomRow, SpecialSessionComponent):
     def set_stop_track_clip_buttons(self, buttons):
         if (not self._pro_mode_on) or buttons != None:
             super(SpecialSessionComponent, self).set_stop_track_clip_buttons(buttons)
-
-
-def _ignore(modifier, now):
-    """A press that only starts the timing (undo acts on release)."""
