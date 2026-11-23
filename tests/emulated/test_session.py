@@ -124,3 +124,12 @@ def test_pro_session_last_row_stops_tracks(session_rig):
 	rig.tap(0, 7)  # bottom row: stop clip buttons
 	rig.song.advance(1.0)
 	assert not rig.song.tracks[0].clip_slots[0].is_playing
+
+
+def test_boot_leaves_the_framework_scene_component_alone(make_rig, model):
+	"""Other control surfaces in Live share _Framework: the script must not patch it."""
+	from _Framework.ClipSlotComponent import ClipSlotComponent
+	from _Framework.SceneComponent import SceneComponent
+
+	make_rig(model)
+	assert SceneComponent.clip_slot_component_type is ClipSlotComponent

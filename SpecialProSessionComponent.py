@@ -2,7 +2,6 @@
 
 import Live
 #import traceback
-from .ClipSlotMK2 import ClipSlotMK2
 from _Framework.SceneComponent import SceneComponent
 from _Framework.ButtonElement import ButtonElement
 from _Framework.SubjectSlot import subject_slot
@@ -467,9 +466,6 @@ class SpecialProSessionComponent(SpecialSessionComponent):
 
 	def __init__(self, num_tracks, num_scenes, stop_clip_buttons, side_buttons, control_surface, main_selector, livesong = None):
 		self._pro_mode_on = False
-		if control_surface._mk2_rgb:
-			#use custom clip colour coding : blink and pulse for trig and play 
-			SceneComponent.clip_slot_component_type = ClipSlotMK2
 		SpecialSessionComponent.__init__(self, num_tracks = num_tracks, num_scenes = num_scenes, stop_clip_buttons = stop_clip_buttons, control_surface= control_surface, main_selector= main_selector)
 		
 		self._side_buttons = side_buttons
