@@ -45,11 +45,24 @@ class ScaleComponent(ControlSurfaceComponent):
 		# C  D  E  F  G  A  B
 		self._white_notes_index = [0, 2, 4, 5, 7, 9, 11]
 		
-		self._current_minor_mode = 1 #Natural
-		self._minor_modes = [1, 13, 14]#Natural, Harmonic, Melodic
+		# Scales are found by name: their order comes from Live (Live.Song.get_all_scales_ordered)
+		self._major_modus = self._modus_index("Major")
+		self._natural_minor_modus = self._modus_index("Minor")
+		self._minor_pentatonic_modus = self._modus_index("Minor Pentatonic")
+		self._major_pentatonic_modus = self._modus_index("Major Pentatonic")
+		self._minor_modes = [i for i in (self._natural_minor_modus, self._modus_index("Harmonic Minor"),
+			self._modus_index("Melodic Minor")) if i != -1]  # Natural, Harmonic, Melodic
+		self._current_minor_mode = self._natural_minor_modus
 		
 		super(ScaleComponent, self).__init__(*a, **k)
 		self.set_enabled(enabled)
+
+	def _modus_index(self, name):
+		"""Index of the scale called name in Live's list, or -1."""
+		try:
+			return self._modus_names.index(name)
+		except ValueError:
+			return -1
 
 	def _remove_scale_listeners(self):
 		try:
@@ -413,18 +426,18 @@ class ScaleComponent(ControlSurfaceComponent):
 				
 				# relative major/minor scale	
 				if y == 1 and x == 2:  
-					if self._modus == 0: #Ionian Mode (Major)
+					if self._modus == self._major_modus: #Ionian Mode (Major)
 						selected_modus = self._current_minor_mode
 						root = CIRCLE_OF_FIFTHS[(CIRCLE_OF_FIFTHS.index(selected_key) + 3) % 12] # Jump up 3 steps in 5th Circle equals jumping a third minor down
-					elif self._modus in [1, 13, 17]:#Natural (Aeolian), Harmonic, Melodic Minor
+					elif self._modus in self._minor_modes:#Natural (Aeolian), Harmonic, Melodic Minor
 						self._current_minor_mode = selected_modus
 						selected_modus = 0
 						root = CIRCLE_OF_FIFTHS[(CIRCLE_OF_FIFTHS.index(selected_key) - 3 + 12) % 12] # Jump down 3 steps in 5th Circle equals jumping a third minor up
-					elif self._modus == 11: #Minor Pentatonic
-						selected_modus = 12
+					elif self._modus == self._minor_pentatonic_modus: #Minor Pentatonic
+						selected_modus = self._major_pentatonic_modus
 						root = CIRCLE_OF_FIFTHS[(CIRCLE_OF_FIFTHS.index(selected_key) - 3) % 12]
-					elif self._modus == 12: #Major Pentatonic
-						selected_modus = 11
+					elif self._modus == self._major_pentatonic_modus: #Major Pentatonic
+						selected_modus = self._minor_pentatonic_modus
 						root = CIRCLE_OF_FIFTHS[(CIRCLE_OF_FIFTHS.index(selected_key) + 3 + 12) % 12]
 					self._control_surface.show_message("Relative scale : "+keys[root]+" "+str(self._modus_names[selected_modus]))
 					message = False

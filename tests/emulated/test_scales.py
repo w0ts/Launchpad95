@@ -1,5 +1,4 @@
 """The instrument mode's ScaleComponent on a booted surface."""
-import pytest
 
 
 def test_scale_component_pattern_uses_the_octave(make_rig):
@@ -13,7 +12,6 @@ def test_scale_component_pattern_uses_the_octave(make_rig):
 	assert scale_component.get_pattern().note(0, 0).index == 48
 
 
-@pytest.mark.xfail(strict=True, reason="bug: ScaleComponent.py:49 and InstrumentControllerComponent.py:307 use scale index 14 as Melodic Minor, ScaleComponent.py:419 uses 17; in Live 12's scale order (fake list, from memory) 14 is Harmonic Major")
 def test_minor_mode_indexes_name_minor_scales(make_rig):
 	from harness.devices import LaunchpadX
 

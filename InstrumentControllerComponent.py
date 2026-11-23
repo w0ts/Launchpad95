@@ -302,15 +302,15 @@ class InstrumentControllerComponent(CompoundComponent):
 								root = [0, 2, 4, 5, 7, 9, 11, 12][x] + 1
 								self._control_surface.show_message(keys[root]+" "+str(self._scales._modus_names[selected_modus]))
 							if root == selected_key:  # alternate minor/major
-								if selected_modus == 0:
+								if selected_modus == self._scales._major_modus:
 									selected_modus = self._scales._current_minor_mode
-								elif selected_modus in [1, 13, 14]:
+								elif selected_modus in self._scales._minor_modes:
 									self._scales._current_minor_mode = selected_modus
 									selected_modus = 0
-								elif selected_modus == 11:
-									selected_modus = 12
-								elif selected_modus == 12:
-									selected_modus = 11
+								elif selected_modus == self._scales._minor_pentatonic_modus:
+									selected_modus = self._scales._major_pentatonic_modus
+								elif selected_modus == self._scales._major_pentatonic_modus:
+									selected_modus = self._scales._minor_pentatonic_modus
 								self._control_surface.show_message(keys[root]+" "+str(self._scales._modus_names[selected_modus]))
 						else:
 							
@@ -324,18 +324,18 @@ class InstrumentControllerComponent(CompoundComponent):
 								root = CIRCLE_OF_FIFTHS[(self.tuple_idx(CIRCLE_OF_FIFTHS, selected_key) - 1 + 12) % 12]
 								self._control_surface.show_message("circle of 5ths <- "+keys[selected_key]+" "+str(self._scales._modus_names[selected_modus])+" => "+keys[root]+" "+str(self._scales._modus_names[selected_modus]))
 							if y == 0 and x == 2:  # relative scale
-								if selected_modus == 0:
+								if selected_modus == self._scales._major_modus:
 									selected_modus = self._scales._current_minor_mode
 									root = CIRCLE_OF_FIFTHS[(self.tuple_idx(CIRCLE_OF_FIFTHS, selected_key) + 3) % 12]
-								elif selected_modus in [1, 13, 14]:
+								elif selected_modus in self._scales._minor_modes:
 									self._scales._current_minor_mode = selected_modus
 									selected_modus = 0
 									root = CIRCLE_OF_FIFTHS[(self.tuple_idx(CIRCLE_OF_FIFTHS, selected_key) - 3 + 12) % 12]
-								elif selected_modus == 11:
-									selected_modus = 12
+								elif selected_modus == self._scales._minor_pentatonic_modus:
+									selected_modus = self._scales._major_pentatonic_modus
 									root = CIRCLE_OF_FIFTHS[(self.tuple_idx(CIRCLE_OF_FIFTHS, selected_key) + 3) % 12]
-								elif selected_modus == 12:
-									selected_modus = 11
+								elif selected_modus == self._scales._major_pentatonic_modus:
+									selected_modus = self._scales._minor_pentatonic_modus
 									root = CIRCLE_OF_FIFTHS[(self.tuple_idx(CIRCLE_OF_FIFTHS, selected_key) - 3 + 12) % 12]
 								self._control_surface.show_message("Relative scale : "+keys[root]+" "+str(self._scales._modus_names[selected_modus]))
 	
@@ -637,12 +637,12 @@ class InstrumentControllerComponent(CompoundComponent):
 
 
 					if self._quick_scale_root==KEY_MODE:
-						if selected_modus == 0 or selected_modus == 12:
+						if selected_modus in (self._scales._major_modus, self._scales._major_pentatonic_modus):
 							key_color = "QuickScale.Major.Key"
 							fifth_button_color = "QuickScale.Major.CircleOfFifths"
 							mode_button_color = "QuickScale.Major.Mode"
 							relative_scale_button_color = "QuickScale.Major.RelativeScale"
-						elif selected_modus == 1 or selected_modus == 11:
+						elif selected_modus in (self._scales._natural_minor_modus, self._scales._minor_pentatonic_modus):
 							key_color = "QuickScale.Minor.Key"
 							fifth_button_color = "QuickScale.Minor.CircleOfFifths"
 							mode_button_color = "QuickScale.Minor.Mode"
