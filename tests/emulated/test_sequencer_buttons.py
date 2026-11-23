@@ -233,3 +233,65 @@ def test_random_button_randomises(melodic_rig):
     rig.tap_side(RANDOM)
     assert rig.messages[-1] == "randomise"
     assert rig.song.tracks[0].clip_slots[0].clip.note_tuples()
+
+
+# -- which clip the drum sequencer follows
+@pytest.fixture
+def three_clip_rig(make_rig, model):
+    rig = make_rig(model, song=make_song(clips=[(0, 0), (0, 2), (0, 4)]))
+    rig.tap_top(USER2)
+    rig.tick(2)
+    return rig
+
+
+def slot_clip(rig, scene):
+    return rig.song.tracks[0].clip_slots[scene].clip
+
+
+def test_unlocked_sequencer_follows_the_selected_scene(three_clip_rig):
+    rig = three_clip_rig
+    rig.song.view.selected_scene = rig.song.scenes[2]
+    rig.tick()
+    assert stepseq(rig)._clip is slot_clip(rig, 2)
+    rig.song.view.selected_scene = rig.song.scenes[1]  # empty slot
+    rig.tick()
+    assert stepseq(rig)._clip is None
+
+
+def test_clip_lock_keeps_the_clip_when_the_scene_changes(three_clip_rig):
+    rig = three_clip_rig
+    rig.tap_side(LOCK)
+    rig.song.view.selected_scene = rig.song.scenes[2]
+    rig.tick()
+    assert stepseq(rig)._clip is slot_clip(rig, 0)
+
+
+def test_track_lock_follows_the_triggered_then_the_playing_clip(three_clip_rig):
+    rig = three_clip_rig
+    hold_side(rig, LOCK, 0.7)  # locked to the track
+    assert stepseq(rig)._lock_to_track and stepseq(rig)._is_locked
+    rig.song.tracks[0].clip_slots[4].fire()
+    rig.song.view.selected_scene = rig.song.scenes[1]
+    rig.tick(6)  # the refresh scheduled 5 ticks later sees the triggered clip
+    assert stepseq(rig)._clip is slot_clip(rig, 4)
+    rig.song.advance(1.0)  # now playing
+    rig.song.view.selected_scene = rig.song.scenes[3]
+    rig.tick(6)
+    assert stepseq(rig)._clip is slot_clip(rig, 4)
+
+
+def test_track_lock_without_playing_clip_uses_the_selected_scene(three_clip_rig):
+    rig = three_clip_rig
+    hold_side(rig, LOCK, 0.7)
+    rig.song.view.selected_scene = rig.song.scenes[2]
+    rig.tick(6)
+    assert stepseq(rig)._clip is slot_clip(rig, 2)
+
+
+def test_deleting_the_locked_clip_unlocks(three_clip_rig):
+    rig = three_clip_rig
+    rig.tap_side(LOCK)
+    rig.song.tracks[0].clip_slots[0].delete_clip()
+    rig.tick()
+    assert not stepseq(rig)._is_locked
+    assert stepseq(rig)._clip is None
