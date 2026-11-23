@@ -217,6 +217,13 @@ class Clip(_Object):
 		if len(self._notes) != before:
 			notify(self, "notes")
 
+	def remove_notes_by_id(self, ids):
+		ids = set(ids)
+		before = len(self._notes)
+		self._notes = [n for n in self._notes if n.note_id not in ids]
+		if len(self._notes) != before:
+			notify(self, "notes")
+
 	def add_new_notes(self, specs):
 		specs = tuple(specs)
 		for spec in specs:

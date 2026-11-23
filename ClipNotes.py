@@ -31,10 +31,10 @@ def _note_key(pitch, time):
 	return (int(pitch), round(float(time), 6))
 
 
-def _extras_of(clip):
-	"""Map (pitch, time) -> extra attributes of the notes currently in the clip."""
+def _extras_of(existing):
+	"""Map (pitch, time) -> extra attributes of the given notes of the clip."""
 	extras = {}
-	for note in _fetch_extended(clip):
+	for note in existing:
 		values = {}
 		for name in _EXTRA_ATTRIBUTES:
 			if hasattr(note, name):
@@ -53,6 +53,21 @@ def read_all_notes(clip):
 	notes = clip.get_selected_notes()
 	clip.deselect_all_notes()
 	return notes
+
+
+def _remove_notes(clip, existing):
+	"""Remove exactly the notes read from the clip, wherever they are (also before time 0).
+
+	By note id where Live has it (remove_notes_by_id), else by a time range that starts at
+	the earliest of those notes.
+	"""
+	ids = [getattr(note, "note_id", None) for note in existing]
+	if hasattr(clip, "remove_notes_by_id") and None not in ids:
+		if ids:
+			clip.remove_notes_by_id(ids)
+		return
+	start = min([_ALL_TIME_START] + [float(note.start_time) for note in existing])
+	clip.remove_notes_extended(_ALL_PITCHES[0], _ALL_PITCHES[1], start, _ALL_TIME_SPAN - start)
 
 
 def _default_spec_factory():
@@ -74,13 +89,14 @@ def write_all_notes(clip, notes, spec_factory=None):
 		return
 	if spec_factory is None:
 		spec_factory = _default_spec_factory()
-	extras = _extras_of(clip)
+	existing = tuple(_fetch_extended(clip))
+	extras = _extras_of(existing)
 	specs = tuple(
 		spec_factory(
 			pitch=int(pitch), start_time=float(time), duration=float(duration),
 			velocity=float(velocity), mute=bool(mute),
 			**extras.get(_note_key(pitch, time), {}))
 		for (pitch, time, duration, velocity, mute) in notes)
-	clip.remove_notes_extended(_ALL_PITCHES[0], _ALL_PITCHES[1], _ALL_TIME_START, _ALL_TIME_SPAN)
+	_remove_notes(clip, existing)
 	if specs:
 		clip.add_new_notes(specs)
