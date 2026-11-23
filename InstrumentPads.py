@@ -112,7 +112,7 @@ class InstrumentPads:
             root = _fifths_step(key, -1)
             self._show_fifths("<-", key, root, modus)
         elif y == 0 and x == 2:
-            modus, root = self._relative_scale(modus, key)
+            modus, root = scales._relative_scale(key, modus, -1)
             name = KEY_NAMES[root]  # root -1 (no relative scale): shows "B", as before
             self._control_surface.show_message("Relative scale : " + name + " " + str(scales._modus_names[modus]))
         if root != -1:
@@ -140,20 +140,6 @@ class InstrumentPads:
         if modus == scales._major_pentatonic_modus:
             return scales._minor_pentatonic_modus
         return modus
-
-    def _relative_scale(self, modus, key):
-        """(modus, root) of the relative scale, or (modus, -1) when there is none."""
-        scales = self._scales
-        if modus == scales._major_modus:
-            return scales._current_minor_mode, _fifths_step(key, 3)
-        if modus in scales._minor_modes:
-            scales._current_minor_mode = modus
-            return 0, _fifths_step(key, -3)
-        if modus == scales._minor_pentatonic_modus:
-            return scales._major_pentatonic_modus, _fifths_step(key, 3)
-        if modus == scales._major_pentatonic_modus:
-            return scales._minor_pentatonic_modus, _fifths_step(key, -3)
-        return modus, -1
 
     def _quick_scale_type_pad(self, x, y):
         if y == 0 and x == 7:

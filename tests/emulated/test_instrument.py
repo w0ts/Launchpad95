@@ -214,3 +214,22 @@ def test_solo_and_undo_work_without_a_session_record_button(instrument_rig):
     rig.song.can_undo = True
     rig.tap_side(UNDO)
     assert rig.song.undo_steps == ["undo"]
+
+
+@pytest.mark.parametrize(
+    "start, expected",
+    [(("minor_pentatonic", 9), ("major_pentatonic", 0)), (("major_pentatonic", 0), ("minor_pentatonic", 9))],
+    ids=["A-minor-penta", "C-major-penta"],
+)
+def test_quick_scale_relative_pentatonic(instrument_rig, start, expected):
+    rig = instrument_rig
+    scales = rig.selector._instrument_controller._scales
+    rig.press_side(SCALES)
+    rig.tap(7, 1)  # quick scale on
+    rig.release_side(SCALES)
+    scales.set_modus(getattr(scales, f"_{start[0]}_modus"), False)
+    scales.set_key(start[1], False)
+    rig.tick()
+    rig.tap(2, 0)  # relative scale
+    assert scales._modus == getattr(scales, f"_{expected[0]}_modus")
+    assert scales._key == expected[1]
