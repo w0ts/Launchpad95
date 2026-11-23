@@ -21,18 +21,6 @@ class SpecialProSessionRecordingComponent(SessionRecordingComponent):
     def set_record_mode(self, record_mode):
         self._is_record_mode = record_mode
 
-    def _is_fixed_length_on(self):
-        return self._parent._is_fixed_length_on()
-
-    def set_enabled(self, enable):
-        super().set_enabled(enable)
-
-    def _get_fixed_length(self):
-        return self._parent._get_fixed_length()
-
-    def _get_launch_quant(self):
-        return self._parent._get_launch_quant()
-
     def _on_record_button_value(self):
         if self.is_enabled():
             if self._is_record_mode:
@@ -49,8 +37,8 @@ class SpecialProSessionRecordingComponent(SessionRecordingComponent):
         status = self.song().session_record_status
         was_recording = status != Live.Song.SessionRecordStatus.off or self.song().session_record
         if self._track_can_record(track) and not was_recording:
-            if self._is_fixed_length_on():
-                self.song().trigger_session_record(self._get_fixed_length())
+            if self._parent.is_fixed_length_on():
+                self.song().trigger_session_record(self._parent.get_fixed_length())
             else:
                 self.song().trigger_session_record()
         elif not self._stop_recording():

@@ -380,5 +380,5 @@ def test_modifiers_do_nothing_outside_pro_session(pro_rig):
     pro_rig.tap_top(SESSION)
     assert not pro_rig.selector._pro_session_on
     pro_rig.press_side(DELETE)
-    assert not session(pro_rig)._delete_pressed
+    assert not session(pro_rig).modifiers.delete.held
     pro_rig.release_side(DELETE)

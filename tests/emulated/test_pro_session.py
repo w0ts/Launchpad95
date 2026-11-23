@@ -179,7 +179,7 @@ def test_fixed_length_empty_pad_fires_once(pro_rig):
 
 
 def test_fixed_length_plus_led_is_off_at_the_maximum(pro_rig, monkeypatch):
-    from Launchpad95.SpecialProSessionComponent import MAX_FIXED_LENGTH
+    from Launchpad95.ProSessionSettings import MAX_FIXED_LENGTH
 
     session = pro_rig.selector._session
     sent = []

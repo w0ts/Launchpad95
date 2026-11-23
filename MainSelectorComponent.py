@@ -399,9 +399,9 @@ class MainSelectorComponent(ModeSelectorComponent):
             self._session._scenes.append(self._aux_scene)
 
         if as_active:
-            self._session._set_pro_mode_on(self._pro_session_on)
+            self._session.set_pro_mode_on(self._pro_session_on)
         else:
-            self._session._set_pro_mode_on(False)
+            self._session.set_pro_mode_on(False)
 
         for scene_index in range(self._session._num_scenes):  # iterate over scenes
             scene = self._session.scene(scene_index)
