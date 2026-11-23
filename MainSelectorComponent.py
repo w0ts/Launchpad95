@@ -390,72 +390,74 @@ class MainSelectorComponent(ModeSelectorComponent):
                 button.set_on_off_values("Mode.Session.On", "Mode.Session.Off")
             else:
                 button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
-
-        # matrix
         self._activate_matrix(True)
         self._turn_off_scene_buttons()
 
+        # Pro session hides the 8th scene (its row is the stop/settings row): the session
+        # keeps that SceneComponent aside while pro session is on.
         if (self._session.height() != self._matrix.height()) and (self._aux_scene != None):
             self._session._scenes.append(self._aux_scene)
-
-        if as_active:
-            self._session.set_pro_mode_on(self._pro_session_on)
-        else:
-            self._session.set_pro_mode_on(False)
-
-        for scene_index in range(self._session._num_scenes):  # iterate over scenes
-            scene = self._session.scene(scene_index)
-            if as_active:  # set scene launch buttons
-                scene_button = self._side_buttons[scene_index]
-                scene_button.set_enabled(as_active)
-                if not self._pro_session_on:
-                    scene.set_launch_button(scene_button)
-                else:
-                    scene.set_launch_button(None)
-            else:
-                scene.set_launch_button(None)
-
-            for track_index in range(self._session._num_tracks):  # iterate over tracks of a scene -> clip slots
-                if as_active:  # set clip slot launch button
-                    button = self._matrix.get_button(track_index, scene_index)
-                    button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
-                    button.set_enabled(as_active)
-                    clip_slot = scene.clip_slot(track_index)
-                    if not self._pro_session_on:
-                        clip_slot.set_triggered_to_play_value("Session.ClipTriggeredPlay")
-                        clip_slot.set_stopped_value("Session.ClipStopped")
-                        clip_slot.set_started_value("Session.ClipStarted")
-                        clip_slot.set_launch_button(button)
-                    else:
-                        if scene_index < self._matrix.height() - 1:
-                            clip_slot.set_triggered_to_play_value("ProSession.ClipTriggeredPlay")
-                            clip_slot.set_stopped_value("ProSession.ClipStopped")
-                            clip_slot.set_started_value("ProSession.ClipStarted")
-                            clip_slot.set_launch_button(button)
-                        else:
-                            scene.clip_slot(track_index).set_launch_button(None)
-                else:
-                    scene.clip_slot(track_index).set_launch_button(None)
-
+        self._session.set_pro_mode_on(self._pro_session_on if as_active else False)
+        for scene_index in range(self._session._num_scenes):
+            self._assign_session_scene(scene_index, as_active)
         if self._pro_session_on:
             self._aux_scene = self._session._scenes.pop(-1)
 
-        if as_active:  # Set up stop clip buttons and stop all clips button
-            if self._pro_session_on:
-                if self._clip_stop_buttons != None:
-                    for button in self._clip_stop_buttons:
-                        button.set_enabled(as_active)
-                        # 	button.set_on_off_values("Session.StopClip", "DefaultButton.Disabled")
-                        self._session.set_stop_track_clip_buttons(self._clip_stop_buttons)
-                else:
-                    self._session.set_stop_track_clip_buttons(None)
+        self._assign_stop_buttons(as_active)
+        self._assign_session_zooming(as_active)
+        if as_navigation_enabled:  # nav buttons (track/scene)
+            self._session.set_track_bank_buttons(self._nav_buttons[3], self._nav_buttons[2])
+            self._session.set_scene_bank_buttons(self._nav_buttons[1], self._nav_buttons[0])
+        else:
+            self._session.set_track_bank_buttons(None, None)
+            self._session.set_scene_bank_buttons(None, None)
+        self._session.set_enabled(as_active)
+        self._session._do_show_highlight()
+
+    def _assign_session_scene(self, scene_index, as_active):
+        """Scene launch button (side button; none in pro session) and the row's pads."""
+        scene = self._session.scene(scene_index)
+        if as_active and not self._pro_session_on:
+            scene_button = self._side_buttons[scene_index]
+            scene_button.set_enabled(True)
+            scene.set_launch_button(scene_button)
+        else:
+            if as_active:
+                self._side_buttons[scene_index].set_enabled(True)
+            scene.set_launch_button(None)
+        for track_index in range(self._session._num_tracks):
+            clip_slot = scene.clip_slot(track_index)
+            if not as_active:
+                clip_slot.set_launch_button(None)
+                continue
+            button = self._matrix.get_button(track_index, scene_index)
+            button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
+            button.set_enabled(True)
+            if not self._pro_session_on:
+                clip_slot.set_triggered_to_play_value("Session.ClipTriggeredPlay")
+                clip_slot.set_stopped_value("Session.ClipStopped")
+                clip_slot.set_started_value("Session.ClipStarted")
+                clip_slot.set_launch_button(button)
+            elif scene_index < self._matrix.height() - 1:
+                clip_slot.set_triggered_to_play_value("ProSession.ClipTriggeredPlay")
+                clip_slot.set_stopped_value("ProSession.ClipStopped")
+                clip_slot.set_started_value("ProSession.ClipStarted")
+                clip_slot.set_launch_button(button)
             else:
-                self._session.set_stop_track_clip_buttons(None)
+                clip_slot.set_launch_button(None)  # the bottom row: stop and settings buttons
+
+    def _assign_stop_buttons(self, as_active):
+        """Pro session: the bottom row stops track clips (and more with a side button held)."""
+        if as_active and self._pro_session_on and self._clip_stop_buttons != None:
+            for button in self._clip_stop_buttons:
+                button.set_enabled(True)
+                self._session.set_stop_track_clip_buttons(self._clip_stop_buttons)
         else:
             self._session.set_stop_track_clip_buttons(None)
 
-        if as_active:  # zoom
-            self._zooming.set_zoom_button(self._modes_buttons[0])  # Set Session button as zoom shift button
+    def _assign_session_zooming(self, as_active):
+        if as_active:  # Session button as zoom shift button
+            self._zooming.set_zoom_button(self._modes_buttons[0])
             self._zooming.set_button_matrix(self._matrix)
             self._zooming.set_scene_bank_buttons(self._side_buttons)
             self._zooming.set_nav_buttons(
@@ -467,16 +469,6 @@ class MainSelectorComponent(ModeSelectorComponent):
             self._zooming.set_button_matrix(None)
             self._zooming.set_scene_bank_buttons(None)
             self._zooming.set_nav_buttons(None, None, None, None)
-
-        if as_navigation_enabled:  # nav buttons (track/scene)
-            self._session.set_track_bank_buttons(self._nav_buttons[3], self._nav_buttons[2])
-            self._session.set_scene_bank_buttons(self._nav_buttons[1], self._nav_buttons[0])
-        else:
-            self._session.set_track_bank_buttons(None, None)
-            self._session.set_scene_bank_buttons(None, None)
-
-        self._session.set_enabled(as_active)
-        self._session._do_show_highlight()
 
     def _setup_instrument_controller(self, as_active):
         if self._instrument_controller != None:
