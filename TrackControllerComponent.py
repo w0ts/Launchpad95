@@ -182,7 +182,7 @@ class TrackControllerComponent(MixerComponent):
 		assert (self._next_track_button != None)
 		assert (value in range(128))
 		if self.is_enabled():
-			if not sender.is_momentary() or value is not 0:
+			if not sender.is_momentary() or value != 0:
 				if self.selected_track_idx is not None and self.selected_track_idx < len(self.song().tracks) - 1:
 					self.song().view.selected_track = self.song().tracks[self.selected_track_idx + 1]
 					if  not self._locked_to_track:
@@ -202,7 +202,7 @@ class TrackControllerComponent(MixerComponent):
 		assert (self._prev_track_button != None)
 		assert (value in range(128))
 		if self.is_enabled():
-			if not sender.is_momentary() or value is not 0:
+			if not sender.is_momentary() or value != 0:
 				if self.selected_track_idx is not None and self.selected_track_idx > 0:
 					self.song().view.selected_track = self.song().tracks[self.selected_track_idx - 1]
 					if  not self._locked_to_track:
@@ -230,7 +230,7 @@ class TrackControllerComponent(MixerComponent):
 		assert (self._prev_scene_button != None)
 		assert (value in range(128))
 		if self.is_enabled():
-			if not sender.is_momentary() or value is not 0:
+			if not sender.is_momentary() or value != 0:
 				if self.selected_scene_idx > 0:
 					self.song().view.selected_scene = self.song().scenes[self.selected_scene_idx - 1]
 				
@@ -238,7 +238,7 @@ class TrackControllerComponent(MixerComponent):
 		assert (self._next_scene_button != None)
 		assert (value in range(128))
 		if self.is_enabled():
-			if not sender.is_momentary() or value is not 0:
+			if not sender.is_momentary() or value != 0:
 				if self.selected_scene_idx < len(self.song().scenes) - 1:
 					self.song().view.selected_scene = self.song().scenes[self.selected_scene_idx + 1]			
 
@@ -286,7 +286,7 @@ class TrackControllerComponent(MixerComponent):
 		assert (self._lock_button != None)
 		assert (value in range(128))
 		if self.is_enabled():
-			if value is not 0:
+			if value != 0:
 				self._locked_to_track = not self._locked_to_track
 				if self._locked_to_track:
 					self._lock_button.turn_on()

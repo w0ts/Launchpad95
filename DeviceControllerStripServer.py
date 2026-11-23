@@ -660,7 +660,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
         if self._parent._osd is not None:
             self._parent._osd.mode = "Device Controller"
             name = self.param_name()
-            if name is not "None":
+            if name != "None":
                 self._parent._osd.attribute_names[self._column] = str(name)
                 self._parent._osd.attributes[self._column] = str(
                     self.param_value())

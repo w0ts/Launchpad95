@@ -171,7 +171,7 @@ class DeviceControllerComponent(DeviceComponent):
             try:
                 for slider in self._parameter_controls:
                     name = slider.param_name()
-                    if name is not "None":
+                    if name != "None":
                         self._osd.attribute_names[i] = str(name)
                         self._osd.attributes[i] = str(slider.param_value())
                     else:
@@ -456,7 +456,7 @@ class DeviceControllerComponent(DeviceComponent):
         assert (value in range(128))
 
         if self.is_enabled():
-            if not sender.is_momentary() or value is not 0:
+            if not sender.is_momentary() or value != 0:
                 self._last_mode_toggle_button_press = time.time()
             else:
                 if time.time() - self._last_mode_toggle_button_press > 0.5:
@@ -560,7 +560,7 @@ class DeviceControllerComponent(DeviceComponent):
         assert (self._next_track_button is not None)
         assert (value in range(128))
         if self.is_enabled():
-            if ((not sender.is_momentary()) or (value is not 0)):
+            if ((not sender.is_momentary()) or (value != 0)):
                 if self.selected_track_idx is not None and self.selected_track_idx < len(
                     self.song().tracks) - 1 and not self._is_locked_to_device:
                     for offset in range(1,
@@ -589,7 +589,7 @@ class DeviceControllerComponent(DeviceComponent):
     def _prev_track_value(self, value, sender):
         assert (self._prev_track_button is not None)
         assert (value in range(128))
-        if ((not sender.is_momentary()) or (value is not 0)):
+        if ((not sender.is_momentary()) or (value != 0)):
             if self.is_enabled():
                 if self.selected_track_idx is not None and self.selected_track_idx > 0 and not self._is_locked_to_device:
                     for offset in range(1, self.selected_track_idx + 1):
