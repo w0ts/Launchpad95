@@ -85,6 +85,21 @@ def test_half_second_press_slides_the_full_range_in_one_and_a_half_seconds(slide
     assert rig.selector._device_controller._osd.attributes[SLIDER] == "1.0"
 
 
+def test_slide_to_a_target_float32_cannot_hold_ends(slide_rig):
+    """Live keeps parameter values as 32-bit floats, so 6/7 reads back as 0.857142865...
+    The slide must end there instead of rewriting the parameter on every tick."""
+    rig = slide_rig
+    parameter = param(rig, SLIDER)
+    hold_pad(rig, SLIDER, 6, 0.5)
+    rig.wait(2.0)
+    assert parameter.value == pytest.approx(6 / 7)
+    assert not slides(rig).is_sliding()
+    writes = []
+    parameter.add_value_listener(lambda: writes.append(parameter.value))
+    rig.wait(1.0)
+    assert writes == []
+
+
 def test_slide_goes_down_too(slide_rig):
     rig = slide_rig
     parameter = param(rig, SLIDER)

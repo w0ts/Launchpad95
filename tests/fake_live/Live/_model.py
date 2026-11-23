@@ -5,7 +5,14 @@ their listeners at once; nothing runs in the background. Transport and clip
 launching are simulated by the test (see ``Song.advance`` and ``ClipSlot.fire``).
 """
 
+import struct
+
 from ._listenable import events, listenable, notify
+
+
+def _as_float32(value):
+    """The value as Live keeps it: a 32-bit float."""
+    return struct.unpack("f", struct.pack("f", value))[0]
 
 
 class LimitationError(Exception):
@@ -42,6 +49,9 @@ class DeviceParameter(_Object):
         if name == "value" and "max" in self.__dict__:
             if not (self.min <= value <= self.max):
                 raise RuntimeError(f"Invalid value {value!r} for parameter {self.name}")
+            # Live stores parameter values as 32-bit floats: 6/7 reads back as 0.857142865...
+            if isinstance(value, float):
+                value = _as_float32(value)
         object.__setattr__(self, name, value)
 
     def str_for_value(self, value):

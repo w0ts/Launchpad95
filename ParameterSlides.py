@@ -54,13 +54,13 @@ class _Slide:
         if round(value, VALUE_DIGITS) != round(self.last_value, VALUE_DIGITS):
             return False  # moved by something else: drop
         distance = abs(self.target - value)
-        if distance == 0:
-            return False
+        if round(distance, VALUE_DIGITS) == 0:
+            return False  # there (Live keeps 32-bit floats: 6/7 never reads back exactly)
         offset = distance if self.rate is None else min(self.rate * elapsed, distance)
         new_value = value + offset if value < self.target else value - offset
         parameter.value = max(min(new_value, parameter.max), parameter.min)
         self.last_value = parameter.value
-        return self.last_value != self.target
+        return round(abs(self.target - self.last_value), VALUE_DIGITS) != 0
 
 
 class ParameterSlides:
