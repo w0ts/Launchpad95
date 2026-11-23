@@ -1,9 +1,10 @@
 from _Framework.ButtonElement import Color
 
+
 class Blink(Color):
 
 	def __init__(self, midi_value = 0, *a, **k):
-		super(Blink, self).__init__(midi_value, *a, **k)
+		super().__init__(midi_value, *a, **k)
 
 	def draw(self, interface):
 		interface.send_value(0)
@@ -13,7 +14,7 @@ class Blink(Color):
 class Pulse(Color):
 
 	def __init__(self, midi_value = 0, *a, **k):
-		super(Pulse, self).__init__(midi_value, *a, **k)
+		super().__init__(midi_value, *a, **k)
 
 	def draw(self, interface):
 		interface.send_value(0)

@@ -1,5 +1,6 @@
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 
+
 class M4LInterface(ControlSurfaceComponent):
 
 	def __init__(self):
@@ -13,7 +14,7 @@ class M4LInterface(ControlSurfaceComponent):
 	def disconnect(self):
 		self._update_listener = None
 		self._updateML_listener = None
-		super(M4LInterface, self).disconnect()
+		super().disconnect()
 
 	def set_mode(self, mode):
 		self.clear()

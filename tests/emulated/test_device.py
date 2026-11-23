@@ -4,7 +4,6 @@ import time
 
 import Live
 import pytest
-
 from harness.rig import make_song
 
 USER1 = 5

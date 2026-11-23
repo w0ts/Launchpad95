@@ -1,14 +1,15 @@
-from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
+import time
+from random import randrange
+
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
-from .StepSequencerComponent import StepSequencerComponent, ButtonElement, \
-	QUANTIZATION_NAMES
+from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
+
+from .ClipNotes import write_all_notes
 from .LoopSelectorComponent import LoopSelectorComponent
 from .NoteSelectorComponent import NoteSelectorComponent
-from .ScaleComponent import MUSICAL_MODES, KEY_NAMES
+from .ScaleComponent import KEY_NAMES, MUSICAL_MODES
+from .StepSequencerComponent import QUANTIZATION_NAMES, ButtonElement, StepSequencerComponent
 from .TrackControllerComponent import TrackControllerComponent
-from .ClipNotes import write_all_notes
-from random import randrange
-import time
 
 STEPSEQ_MODE_NOTES = 1
 STEPSEQ_MODE_NOTES_OCTAVES = 2
@@ -761,12 +762,12 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
 class StepSequencerComponent2(StepSequencerComponent):
 
 	def __init__(self, matrix, side_buttons, top_buttons, control_surface):
-		super(StepSequencerComponent2, self).__init__(matrix, side_buttons, top_buttons, control_surface)
+		super().__init__(matrix, side_buttons, top_buttons, control_surface)
 		self._name = "melodic step sequencer"
 		
 		
 	def _set_scale_selector(self):
-		super(StepSequencerComponent2, self)._set_scale_selector()
+		super()._set_scale_selector()
 		self._scale_selector._mode = "diatonic"
 		self._scale_selector._drumrack = False
 

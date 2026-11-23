@@ -21,7 +21,7 @@ MK2_CHALLENGE_HEADER = (240, 0, 32, 41, 2, 24, 64)
 STATIC, FLASH, PULSE = 0, 1, 2
 
 
-class Led(object):
+class Led:
 	"""The state of one LED: the static value, and the flash/pulse value if any."""
 
 	def __init__(self):
@@ -52,7 +52,7 @@ class Led(object):
 		return "Led(static=%r, flash=%r, pulse=%r)" % (self.static, self.flash, self.pulse)
 
 
-class EmulatedLaunchpad(object):
+class EmulatedLaunchpad:
 	"""Common behaviour; subclasses give the MIDI layout and the handshake."""
 
 	name = "Launchpad"
@@ -139,7 +139,7 @@ class LaunchpadMK1(EmulatedLaunchpad):
 	flags = dict(_mk2_rgb=False, _mk3_rgb=False, _lpx=False)
 
 	def __init__(self):
-		super(LaunchpadMK1, self).__init__()
+		super().__init__()
 		self._challenge_bytes = {}
 		self.config_values = []
 
@@ -164,7 +164,7 @@ class LaunchpadMK1(EmulatedLaunchpad):
 		if status == CC and identifier == 0:
 			self.config_values.append(value)
 			return
-		super(LaunchpadMK1, self).receive_short(status, channel, identifier, value)
+		super().receive_short(status, channel, identifier, value)
 
 
 class _RGBLaunchpad(EmulatedLaunchpad):
@@ -203,7 +203,7 @@ class _ProgrammerModeLaunchpad(_RGBLaunchpad):
 	family = None
 
 	def __init__(self):
-		super(_ProgrammerModeLaunchpad, self).__init__()
+		super().__init__()
 		self.sysex_commands = []
 
 	@property

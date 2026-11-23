@@ -1,5 +1,5 @@
 
-class Settings():
+class Settings:
     # Add Stop buttons at the bottom of the Session. Experimental
     # SESSION__STOP_BUTTONS = True
     SESSION__STOP_BUTTONS = False

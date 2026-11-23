@@ -1,7 +1,10 @@
-from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
-from _Framework.ButtonElement import ButtonElement
-from .ClipNotes import read_all_notes, write_all_notes
 import time
+
+from _Framework.ButtonElement import ButtonElement
+from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
+
+from .ClipNotes import read_all_notes, write_all_notes
+
 
 class NoteEditorComponent(ControlSurfaceComponent):
 
@@ -330,7 +333,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		assert (value in range(128))
 		assert (x in range(self._matrix.width()))
 		assert (y in range(self._matrix.height()))
-		assert isinstance(is_momentary, type(False))
+		assert isinstance(is_momentary, bool)
 
 		if self.is_enabled() and self._clip == None:
 			self._stepsequencer.create_clip()

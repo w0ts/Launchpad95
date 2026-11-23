@@ -1,13 +1,13 @@
 import math
-from _Framework.ModeSelectorComponent import ModeSelectorComponent
+
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
+from _Framework.ModeSelectorComponent import ModeSelectorComponent
 from _Framework.SessionComponent import SessionComponent
-from .SpecialMixerComponent import SpecialMixerComponent
-from .PreciseButtonSliderElement import (
-	PreciseButtonSliderElement, SLIDER_MODE_VOLUME, SLIDER_MODE_PAN
-)
+
+from .PreciseButtonSliderElement import SLIDER_MODE_PAN, SLIDER_MODE_VOLUME, PreciseButtonSliderElement
 from .Settings import Settings
+from .SpecialMixerComponent import SpecialMixerComponent
 
 
 def level_to_value(level):
@@ -128,7 +128,7 @@ class SubSelectorComponent(ModeSelectorComponent):
 		self._session.set_stop_all_clips_button(None)
 
 	def update(self):
-		super(SubSelectorComponent, self).update()
+		super().update()
 		assert (self._modes_buttons != None)
 		if self.is_enabled():
 			if (self._modes_buttons != None):
@@ -152,7 +152,7 @@ class SubSelectorComponent(ModeSelectorComponent):
 				button.turn_off()
 
 			for index in range(self._matrix.width()):
-				self._sliders[index].set_disabled((self._mode_index == -1))
+				self._sliders[index].set_disabled(self._mode_index == -1)
 
 			self._mixer.set_allow_update(False)
 			self._session.set_allow_update(False)

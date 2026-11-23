@@ -1,4 +1,5 @@
 import os
+
 from .Settings import Settings
 
 USER_HOME = os.path.expanduser('~')

@@ -1,8 +1,7 @@
-import traceback
-import time
-from threading import Thread
-from functools import partial
 import queue
+import traceback
+from functools import partial
+from threading import Thread
 
 from .DeviceControllerStripServer import DeviceControllerStripServer
 from .Log import log
@@ -14,7 +13,7 @@ non_returns = ["set_precision_mode", "set_stepless_mode", "shutdown",
 returning = ["set_enabled", "param_name", "param_value","__ne__"]
 
 
-class DeviceControllerStripProxy():
+class DeviceControllerStripProxy:
     def __init__(self, buttons, control_surface, column, parent=None):
         self._request_queue = queue.Queue()
         self._response_queue = queue.Queue()
@@ -66,7 +65,7 @@ class DeviceControllerStripProxy():
             if response == 'None' and False:
                 return None
             return response
-        except queue.Empty as e:
+        except queue.Empty:
             self.failed = True
             #log(f'Proxy{self.column}: _call_return_handler {name} {args} {kwargs} failed')
             log(traceback.format_stack())

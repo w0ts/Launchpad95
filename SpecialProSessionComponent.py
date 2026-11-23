@@ -1,18 +1,21 @@
 # imported from https://github.com/poltow/Launchpad97
 
+import time
+
 import Live
+from _Framework import Task
+from _Framework.ButtonElement import ButtonElement
+from _Framework.ClipSlotComponent import ClipSlotComponent
+
 #import traceback
 from _Framework.SceneComponent import SceneComponent
-from _Framework.ButtonElement import ButtonElement
-from _Framework.SubjectSlot import subject_slot
-from _Framework.ClipSlotComponent import ClipSlotComponent
-from _Framework import Task
+from _Framework.SubjectSlot import subject_slot, subject_slot_group
 from _Framework.Util import in_range
-from _Framework.SubjectSlot import subject_slot_group
-import time
+
 from .SpecialProSessionRecordingComponent import SpecialProSessionRecordingComponent
 from .SpecialSessionComponent import SpecialSessionComponent
 from .TargetTrackComponent import TargetTrackComponent
+
 _Q = Live.Song.Quantization
 Rec_Q = Live.Song.RecordingQuantization
 	
@@ -85,14 +88,14 @@ class SpecialClipSlotComponent(ClipSlotComponent):
 	device = True
 	
 	def __init__(self, should_arm = None, *a, **k):
-		super(SpecialClipSlotComponent, self).__init__(*a, **k)
+		super().__init__(*a, **k)
 		self._launched_by_press = False  # the last press launched: forward its release
 		
 	def _set_parent(self, parent):		
 		self._parent = parent
 	
 	def _do_select_clip(self, clip_slot):
-		super(SpecialClipSlotComponent, self)._do_select_clip(clip_slot)
+		super()._do_select_clip(clip_slot)
 		if self._clip_slot is not None:
 			clip = clip_slot.clip
 			
@@ -213,7 +216,7 @@ class SpecialClipSlotComponent(ClipSlotComponent):
 	 
 	def _do_launch_clip(self, value):
 		if(not self._is_fixed_length_on()):
-			super(SpecialClipSlotComponent, self)._do_launch_clip(value)
+			super()._do_launch_clip(value)
 		else:	 
 			button = self._launch_button_value.subject # MATRIX BUTTON
 			launch_pressed = value or not button.is_momentary() # LAUNCH MSG
@@ -237,7 +240,7 @@ class SpecialClipSlotComponent(ClipSlotComponent):
 				self.application().view.show_view('Detail/Clip')
 
 	def _feedback_value(self):
-		ret = super(SpecialClipSlotComponent, self)._feedback_value()
+		ret = super()._feedback_value()
 		if self._clip_slot and ret == 'ProSession.ClipStopped':
 			track = self._clip_slot.canonical_parent
 			if track.is_foldable:
@@ -339,13 +342,13 @@ class SpecialClipSlotComponent(ClipSlotComponent):
 						self._do_track_arm()
 					self._do_launch_clip(value)
 		else:
-			super(SpecialClipSlotComponent, self)._launch_button_value(value)
+			super()._launch_button_value(value)
 
 class SpecialSceneComponent(SceneComponent):
 	clip_slot_component_type = SpecialClipSlotComponent
 
 	def __init__(self, *a, **k):
-		super(SpecialSceneComponent, self).__init__(*a, **k)
+		super().__init__(*a, **k)
 			
 	def _set_parent(self, parent):		
 		self._parent = parent
@@ -591,7 +594,7 @@ class SpecialProSessionComponent(SpecialSessionComponent):
 		self._quantize_button = None
 		self._record_button = None
 		self._tap_button = None
-		super(SpecialProSessionComponent, self).disconnect()
+		super().disconnect()
 		
 	def _is_shifting(self):
 		return self._shift_pressed
@@ -1274,10 +1277,10 @@ class SpecialProSessionComponent(SpecialSessionComponent):
 				elif self._delete_pressed:
 					self._do_mute_track(value, button)
 				else:
-					super(SpecialProSessionComponent, self)._on_stop_track_value(value, button)
+					super()._on_stop_track_value(value, button)
 				self.update()
 		else:  
-			super(SpecialProSessionComponent, self)._on_stop_track_value(value, button)
+			super()._on_stop_track_value(value, button)
 			
 	def _set_tempo_value(self, value, button):		
 		index = list(self._stop_track_clip_buttons).index(button)

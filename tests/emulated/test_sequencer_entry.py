@@ -3,7 +3,6 @@ its notes (times and lengths) and its loop stay as they were. (In Launchpad_Pro9
 the melodic sequencer moved every note to time 0 with length 0 and shrank the loop.)"""
 import Live
 import pytest
-
 from harness.rig import make_song
 
 SESSION = 4

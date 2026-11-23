@@ -1,5 +1,6 @@
 from _Framework.ButtonElement import Color
 
+
 class Rgb:
 	BLACK = Color(4)
 	

@@ -1,10 +1,10 @@
 import threading
+import time
 import traceback
 
 from .ButtonSliderElement import ButtonSliderElement
-from .Settings import Settings
-import time
 from .Log import log
+from .Settings import Settings
 
 SLIDER_MODE_OFF = 0
 SLIDER_MODE_TOGGLE = 1
@@ -460,7 +460,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                                 param["current_value"] = new_value
                                 param["last_value"] = new_value
                                 break
-                            except RuntimeError as e:
+                            except RuntimeError:
                                 tries += 1
                                 if tries % 100 == 0:
                                     # log(f"A Stacks-{self._column}: RuntimeError for parameter {parameter.name} ({tries})")
@@ -514,7 +514,7 @@ class DeviceControllerStripServer(ButtonSliderElement, threading.Thread):
                         # if (self._parameter_to_map_to != None and self._enabled):
                         try:
                             self._current_value = self._parameter_to_map_to.value
-                        except Exception as e:
+                        except Exception:
                             continue
 
                         if self._target_value is None or self._last_value is None:

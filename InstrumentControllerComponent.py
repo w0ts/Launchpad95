@@ -1,15 +1,12 @@
 import Live
+from _Framework.ButtonElement import ButtonElement
 from _Framework.CompoundComponent import CompoundComponent
 from _Framework.SubjectSlot import subject_slot
-from _Framework.ButtonElement import ButtonElement
-from _Framework.Util import find_if, clamp
-	
-from .TrackControllerComponent import TrackControllerComponent
-from .ScaleComponent import ScaleComponent,CIRCLE_OF_FIFTHS,MUSICAL_MODES,KEY_NAMES
-from .Settings import Settings
-	
+from _Framework.Util import clamp, find_if
 
-from _Framework.ButtonMatrixElement import ButtonMatrixElement
+from .ScaleComponent import CIRCLE_OF_FIFTHS, KEY_NAMES, MUSICAL_MODES, ScaleComponent
+from .TrackControllerComponent import TrackControllerComponent
+
 KEY_MODE = 0
 SCALE_TYPE_MODE = 1
 
@@ -17,7 +14,7 @@ SCALE_TYPE_MODE = 1
 class InstrumentControllerComponent(CompoundComponent):
 
 	def __init__(self, matrix, side_buttons, top_buttons, control_surface, note_repeat):
-		super(InstrumentControllerComponent, self).__init__()
+		super().__init__()
 		self._control_surface = control_surface
 		self._note_repeat = note_repeat
 		self._osd = None
@@ -70,7 +67,7 @@ class InstrumentControllerComponent(CompoundComponent):
 	
 	def disconnect(self):
 		self._remove_scale_listeners()
-		super(InstrumentControllerComponent, self).disconnect()
+		super().disconnect()
 
 	def _remove_scale_listeners(self):
 		try:

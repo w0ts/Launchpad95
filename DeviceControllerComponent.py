@@ -1,9 +1,10 @@
-from _Framework.DeviceComponent import DeviceComponent
-from _Framework.ButtonElement import ButtonElement
-import sys
-from .DeviceControllerStripProxy import DeviceControllerStripProxy
 import time
+
 import Live
+from _Framework.ButtonElement import ButtonElement
+from _Framework.DeviceComponent import DeviceComponent
+
+from .DeviceControllerStripProxy import DeviceControllerStripProxy
 from .Settings import Settings
 
 

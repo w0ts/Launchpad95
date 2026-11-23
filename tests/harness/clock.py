@@ -16,7 +16,7 @@ TIMED_MODULES = ("DeviceControllerComponent", "LoopSelectorComponent", "MainSele
 	"TrackControllerComponent")
 
 
-class FakeTime(object):
+class FakeTime:
 	def __init__(self, start=START):
 		self.now = start
 

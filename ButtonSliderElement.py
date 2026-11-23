@@ -1,4 +1,3 @@
-from _Framework.ButtonElement import ButtonElement
 from _Framework.InputControlElement import MIDI_INVALID_TYPE, InputControlElement
 from _Framework.SliderElement import SliderElement
 from _Framework.SubjectSlot import SlotManager

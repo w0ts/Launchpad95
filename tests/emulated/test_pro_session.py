@@ -3,7 +3,6 @@ modifiers held while tapping a pad: 0 undo, 1 shift, 2 click/copy, 3 quantize,
 4 double, 5 delete, 6 duplicate, 7 record. The bottom row stops tracks, or with a
 modifier held sets tempo, launch/record quantization, mute, solo and arm."""
 import pytest
-
 from harness.rig import make_song
 
 SESSION = 4

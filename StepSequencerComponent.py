@@ -1,16 +1,18 @@
-import Live
-
-from .LoopSelectorComponent import LoopSelectorComponent
-from .NoteSelectorComponent import NoteSelectorComponent
-from _Framework.CompoundComponent import CompoundComponent
-from _Framework.ButtonElement import ButtonElement
-from _Framework.Util import find_if
-from .NoteEditorComponent import NoteEditorComponent
-from .ClipNotes import read_all_notes
-from .TrackControllerComponent import TrackControllerComponent
 import time
-from .ScaleComponent import ScaleComponent, MUSICAL_MODES, KEY_NAMES
+
+import Live
+from _Framework.ButtonElement import ButtonElement
+from _Framework.CompoundComponent import CompoundComponent
+from _Framework.Util import find_if
+
+from .ClipNotes import read_all_notes
+from .LoopSelectorComponent import LoopSelectorComponent
+from .NoteEditorComponent import NoteEditorComponent
+from .NoteSelectorComponent import NoteSelectorComponent
+from .ScaleComponent import KEY_NAMES, MUSICAL_MODES, ScaleComponent
 from .Settings import Settings
+from .TrackControllerComponent import TrackControllerComponent
+
 # quantization button colours. this must remain of length 4.
 QUANTIZATION_MAP = [1, 0.5, 0.25, 0.125]  # 1/4 1/8 1/16 1/32
 QUANTIZATION_NAMES = ["1/4", "1/8", "1/16", "1/32"]
@@ -28,7 +30,7 @@ class StepSequencerComponent(CompoundComponent):
 
     def __init__(self, matrix, side_buttons, top_buttons, control_surface):
         self._osd = None
-        super(StepSequencerComponent, self).__init__()
+        super().__init__()
         self._control_surface = control_surface
         self._number_of_lines_per_note = 1
         self.QUANTIZATION_COLOR_MAP = ["StepSequencer.Quantization.One", "StepSequencer.Quantization.Two", "StepSequencer.Quantization.Three", "StepSequencer.Quantization.Four"]
@@ -90,7 +92,7 @@ class StepSequencerComponent(CompoundComponent):
         self._note_selector = None
         self._scale_selector = None
         self._track_controller = None
-        super(StepSequencerComponent, self).disconnect()
+        super().disconnect()
 
     def _remove_clip_listeners(self, clip):
         if clip != None and clip.is_midi_clip:

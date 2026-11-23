@@ -2,7 +2,6 @@
 import sys
 
 import pytest
-
 from harness.rig import make_song
 
 UP, DOWN, LEFT, RIGHT = 0, 1, 2, 3

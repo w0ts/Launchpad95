@@ -1,17 +1,17 @@
 import traceback
 
 import Live
-from _Framework.ControlSurface import ControlSurface
-from _Framework.InputControlElement import MIDI_CC_TYPE, MIDI_NOTE_TYPE
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
+from _Framework.ControlSurface import ControlSurface
+from _Framework.InputControlElement import MIDI_CC_TYPE, MIDI_NOTE_TYPE
+
 from .ConfigurableButtonElement import ConfigurableButtonElement
+from .Log import log
+from .M4LInterface import M4LInterface
 from .MainSelectorComponent import MainSelectorComponent
 from .NoteRepeatComponent import NoteRepeatComponent
-from .M4LInterface import M4LInterface
-from .Log import log
 from .Settings import Settings
-
 
 DO_COMBINE = Live.Application.combine_apcs()  # requires 8.2 & higher
 
@@ -89,7 +89,7 @@ class Launchpad(ControlSurface):
 			#self._drum_notes = (20, 30, 31, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126)
 			self._drum_notes = (20, 30, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126)
 		else:
-			from .SkinMK1 import make_skin # @Reimport
+			from .SkinMK1 import make_skin  # @Reimport
 			self._skin = make_skin()
 			self._side_notes = (8, 24, 40, 56, 72, 88, 104, 120)
 			self._drum_notes = (41, 42, 43, 44, 45, 46, 47, 57, 58, 59, 60, 61, 62, 63, 73, 74, 75, 76, 77, 78, 79, 89, 90, 91, 92, 93, 94, 95, 105, 106, 107)

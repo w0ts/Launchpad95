@@ -1,21 +1,19 @@
-# -*- coding: utf-8 -*-
 
-from _Framework.ModeSelectorComponent import ModeSelectorComponent
+import time
+
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
-from _Framework.SessionZoomingComponent import DeprecatedSessionZoomingComponent# noqa
+from _Framework.ModeSelectorComponent import ModeSelectorComponent
+from _Framework.SessionZoomingComponent import DeprecatedSessionZoomingComponent  # noqa
+
 from .DeviceControllerComponent import DeviceControllerComponent
-from .SpecialSessionComponent import SpecialSessionComponent
 from .InstrumentControllerComponent import InstrumentControllerComponent
-from .SubSelectorComponent import SubSelectorComponent  # noqa
+from .NoteRepeatComponent import NoteRepeatComponent
+from .Settings import Settings
+from .SpecialProSessionComponent import SpecialProSessionComponent
 from .StepSequencerComponent import StepSequencerComponent
 from .StepSequencerComponent2 import StepSequencerComponent2
-from .NoteRepeatComponent import NoteRepeatComponent
-from _Framework.SceneComponent import SceneComponent
-from .SpecialProSessionComponent import SpecialProSessionComponent
-import Live
-import time
-from .Settings import Settings
+from .SubSelectorComponent import SubSelectorComponent  # noqa
 
 # MIDI channel (0-15) of each user sub mode, by its name in Settings.USER_MODES_1/2
 SUB_MODE_CHANNELS = {
@@ -180,7 +178,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 					self._pro_session_on = not self._pro_session_on
 					session_mode_changed = True
 		self._last_mode_index = new_mode			 
-		super(MainSelectorComponent, self)._mode_value(value, sender)
+		super()._mode_value(value, sender)
 		if session_mode_changed == True:
 			self._update_mode() 
 
@@ -365,7 +363,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 			self._osd.update()
 		
 	def _setup_session(self, as_active, as_navigation_enabled):
-		assert isinstance(as_active, type(False))#assert is boolean
+		assert isinstance(as_active, bool)#assert is boolean
 		for button in self._nav_buttons:
 			if as_navigation_enabled:
 				button.set_on_off_values("Mode.Session.On", "Mode.Session.Off")
@@ -496,18 +494,18 @@ class MainSelectorComponent(ModeSelectorComponent):
 			scene_button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
 			scene_button.force_next_send()
 			scene_button.turn_off()
-			scene_button.set_enabled((not release_side_buttons))#User2 enabled
+			scene_button.set_enabled(not release_side_buttons)#User2 enabled
 
 			for track_index in range(8):
 				button = self._matrix.get_button(track_index, scene_index)
 				button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
 				button.turn_off()
-				button.set_enabled((not release_matrix))#User2 enabled
+				button.set_enabled(not release_matrix)#User2 enabled
 
 		for button in self._nav_buttons:
 			button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
 			button.turn_off()
-			button.set_enabled((not release_nav_buttons)) #User1 & User2 enabled
+			button.set_enabled(not release_nav_buttons) #User1 & User2 enabled
 
 		if drum_rack_mode:#User1 enabled
 			self._config_button.send_value(2)#Set LP drum rack layout grid mapping mode
@@ -538,7 +536,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 				self._stepseq2.set_enabled(False)
 
 	def _setup_mixer(self, as_active):
-		assert isinstance(as_active, type(False))
+		assert isinstance(as_active, bool)
 		if as_active:
 			self._activate_navigation_buttons(True)
 			self._activate_scene_buttons(True)

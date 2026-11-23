@@ -1,7 +1,8 @@
 
-from _Framework.MixerComponent import MixerComponent
-from _Framework.ButtonElement import ButtonElement
 import time
+
+from _Framework.ButtonElement import ButtonElement
+from _Framework.MixerComponent import MixerComponent
 
 
 class TrackControllerComponent(MixerComponent):

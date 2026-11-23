@@ -1,5 +1,6 @@
+from _Framework.ButtonElement import OFF_VALUE, ON_VALUE, ButtonElement
 from _Framework.Skin import SkinColorMissingError
-from _Framework.ButtonElement import ButtonElement, ON_VALUE, OFF_VALUE
+
 
 class ConfigurableButtonElement(ButtonElement):
 	"""
@@ -15,7 +16,7 @@ class ConfigurableButtonElement(ButtonElement):
 
 	def __init__(self, is_momentary, msg_type, channel, identifier, skin = None, default_states = None, control_surface = None, *a, **k):
 		self._control_surface = control_surface
-		super(ConfigurableButtonElement, self).__init__(is_momentary, msg_type, channel, identifier, skin = skin, **k)
+		super().__init__(is_momentary, msg_type, channel, identifier, skin = skin, **k)
 		if default_states is not None:
 			self.default_states = default_states
 		self.states = dict(self.default_states)
@@ -48,7 +49,7 @@ class ConfigurableButtonElement(ButtonElement):
 
 	def reset_state(self):
 		self.states = dict(self.default_states)
-		super(ConfigurableButtonElement, self).reset_state()
+		super().reset_state()
 		self.set_enabled(True)
 
 	def set_on_off_values(self, on_value, off_value = None):
@@ -78,7 +79,7 @@ class ConfigurableButtonElement(ButtonElement):
 		elif value is OFF_VALUE:
 			self._do_send_off_value(**k)
 		elif type(value) is int:
-			super(ConfigurableButtonElement, self).send_value(value, **k)
+			super().send_value(value, **k)
 		else:
 			self._draw_skin(value)
 			
@@ -93,13 +94,13 @@ class ConfigurableButtonElement(ButtonElement):
 		
 	def _do_send_on_value(self, **k):
 		if type(self._on_value) is int:
-			super(ConfigurableButtonElement, self).send_value(self._on_value, **k)
+			super().send_value(self._on_value, **k)
 		else:
 			self._draw_skin(self._on_value)
 			
 	def _do_send_off_value(self, **k):
 		if type(self._off_value) is int:
-			super(ConfigurableButtonElement, self).send_value(self._off_value, **k)
+			super().send_value(self._off_value, **k)
 		else:
 			self._draw_skin(self._off_value)
 

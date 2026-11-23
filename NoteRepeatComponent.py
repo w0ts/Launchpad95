@@ -1,13 +1,12 @@
 from _Framework import Task
 from _Framework.CompoundComponent import CompoundComponent
-import Live
 
 t = 3.0 / 2.0
 NOTE_REPEAT_FREQUENCIES = [4, 4*t, 8, 8*t, 16, 16*t, 32, 32*t]
 del t
 QUANTIZATION_NAMES = ('1/4', '1/4t', '1/8',  '1/8t', '1/16', '1/16t', '1/32', '1/32t')
 
-class DummyNoteRepeat(object):
+class DummyNoteRepeat:
     repeat_rate = 1.0
     enabled = False
 
@@ -18,7 +17,7 @@ class NoteRepeatComponent(CompoundComponent):
     """
 
     def __init__(self, *a, **k):
-        super(NoteRepeatComponent, self).__init__(*a, **k)
+        super().__init__(*a, **k)
         self._last_record_quantization = None
         self._note_repeat = None
         self._freq_index = 2
@@ -41,7 +40,7 @@ class NoteRepeatComponent(CompoundComponent):
         return QUANTIZATION_NAMES[self._freq_index]
     
     def update(self):
-        super(NoteRepeatComponent, self).update()
+        super().update()
 
     def set_note_repeat(self, note_repeat):
         if not note_repeat:

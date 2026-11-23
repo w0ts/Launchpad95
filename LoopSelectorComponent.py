@@ -2,6 +2,7 @@ import time
 
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
+
 from .ClipNotes import write_all_notes
 
 STEPSEQ_MODE_MULTINOTE = 2

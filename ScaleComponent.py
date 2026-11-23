@@ -1,5 +1,5 @@
-from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 import Live
+from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 
 KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 CIRCLE_OF_FIFTHS = [7 * k % 12 for k in range(12)]
@@ -49,7 +49,7 @@ class ScaleComponent(ControlSurfaceComponent):
 			self._modus_index("Melodic Minor")) if i != -1]  # Natural, Harmonic, Melodic
 		self._current_minor_mode = self._natural_minor_modus
 		
-		super(ScaleComponent, self).__init__(*a, **k)
+		super().__init__(*a, **k)
 		self.set_enabled(enabled)
 
 	def _modus_index(self, name):
@@ -197,7 +197,7 @@ class ScaleComponent(ControlSurfaceComponent):
 	def update(self):
 		if self.is_enabled() and self._matrix!=None:
 			#self._control_surface.log_message("update scale: "+str(self._matrix))
-			super(ScaleComponent, self).update()
+			super().update()
 			self._update_OSD()
 			#for index, button in enumerate(self._matrix):
 			for button, (col, row) in self._matrix.iterbuttons():
@@ -536,11 +536,11 @@ class ScaleComponent(ControlSurfaceComponent):
 		)
 		
 
-class Scale(object):
+class Scale:
 
 	# Input vars: scale name, array of scale steps -> (ScaleName, ScaleSteps)
 	def __init__(self, name, notes, *a, **k):
-		super(Scale, self).__init__(*a, **k)
+		super().__init__(*a, **k)
 		self.name = name
 		self.notes = notes
 
@@ -548,7 +548,7 @@ class Scale(object):
 class Modus(Scale):
 
 	def __init__(self, *a, **k):
-		super(Modus, self).__init__(*a, **k)
+		super().__init__(*a, **k)
 
 	def scale(self, base_note):
 		return Scale(KEY_NAMES[base_note], [base_note + x for x in self.notes])
@@ -557,7 +557,7 @@ class Modus(Scale):
 		return [self.scale(b) for b in base_notes]
 
 
-class MelodicPattern(object):
+class MelodicPattern:
 
 	def __init__(self,
 	 		steps=[0, 0], 
@@ -569,7 +569,7 @@ class MelodicPattern(object):
 			chromatic_gtr_mode=False,
 			diatonic_ns_mode=False,
 			*a, **k):
-		super(MelodicPattern, self).__init__(*a, **k)
+		super().__init__(*a, **k)
 		self.steps = steps
 		self.scale = scale
 		self.base_note = base_note

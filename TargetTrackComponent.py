@@ -1,6 +1,7 @@
 #Embedded file name: /Users/versonator/Jenkins/live/output/mac_64_static/Release/python-bundle/MIDI Remote Scripts/Launchpad_Pro/TargetTrackComponent.py
-from _Framework.SubjectSlot import Subject, subject_slot, subject_slot_group
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
+from _Framework.SubjectSlot import Subject, subject_slot, subject_slot_group
+
 
 class TargetTrackComponent(ControlSurfaceComponent, Subject):
     """
@@ -11,7 +12,7 @@ class TargetTrackComponent(ControlSurfaceComponent, Subject):
     _target_track = None
 
     def __init__(self, *a, **k):
-        super(TargetTrackComponent, self).__init__(*a, **k)
+        super().__init__(*a, **k)
         self._armed_track_stack = []
         self._on_tracks_changed.subject = self.song()
         self._on_tracks_changed()

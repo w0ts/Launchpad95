@@ -2,7 +2,6 @@
 are the 7 scale degrees (top row = highest), row 7 is the loop selector."""
 import Live
 import pytest
-
 from harness.rig import make_song
 
 USER2 = 6

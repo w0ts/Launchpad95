@@ -6,7 +6,6 @@ import time
 
 import Live
 import pytest
-
 from harness.devices import LaunchpadX
 
 
@@ -48,7 +47,7 @@ def test_run_loop_error_is_reported_to_the_proxy(server, monkeypatch):
 	assert server._response_queue.get(timeout=1) == (0, "ERROR")
 
 
-class _Proxy(object):
+class _Proxy:
 	"""A DeviceControllerStripProxy without its server thread."""
 
 	@staticmethod

@@ -1,5 +1,5 @@
 from _Framework.SessionComponent import SessionComponent
-import Live
+
 
 class SpecialSessionComponent(SessionComponent):
 

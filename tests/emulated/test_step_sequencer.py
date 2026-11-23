@@ -2,7 +2,6 @@
 the selected track's selected scene."""
 import Live
 import pytest
-
 from harness.rig import make_song
 
 USER2 = 6

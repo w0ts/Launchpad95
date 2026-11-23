@@ -2,7 +2,8 @@
 
 import Live
 from _Framework.ClipCreator import ClipCreator
-from _Framework.SessionRecordingComponent import SessionRecordingComponent, track_playing_slot, track_is_recording
+from _Framework.SessionRecordingComponent import SessionRecordingComponent
+
 _Q = Live.Song.Quantization
 
 class SpecialProSessionRecordingComponent(SessionRecordingComponent):
@@ -10,7 +11,7 @@ class SpecialProSessionRecordingComponent(SessionRecordingComponent):
     def __init__(self, target_track_component, control_surface, *a, **k):
         self._control_surface = control_surface
         self._target_track_component = target_track_component
-        super(SpecialProSessionRecordingComponent, self).__init__(ClipCreator(), True, *a, **k)
+        super().__init__(ClipCreator(), True, *a, **k)
         self._is_record_mode = False
         
     def _set_parent(self, parent):        
@@ -23,7 +24,7 @@ class SpecialProSessionRecordingComponent(SessionRecordingComponent):
         return self._parent._is_fixed_length_on()    
 
     def set_enabled(self, enable):
-        super(SpecialProSessionRecordingComponent, self).set_enabled(enable)
+        super().set_enabled(enable)
         
     def _get_fixed_length(self):
         return self._parent._get_fixed_length()   

@@ -1,6 +1,7 @@
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 
+
 #Allows to note selection and navigation through note groups and pages
 class NoteSelectorComponent(ControlSurfaceComponent):
 

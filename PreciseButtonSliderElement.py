@@ -1,6 +1,6 @@
 
 from _Framework.ButtonSliderElement import ButtonSliderElement
-from .Log import log
+
 SLIDER_MODE_SINGLE = 0
 SLIDER_MODE_VOLUME = 1
 SLIDER_MODE_PAN = 2
@@ -16,7 +16,7 @@ class PreciseButtonSliderElement(ButtonSliderElement):
 		self._value_map = tuple([ float(index / num_buttons) for index in range(num_buttons) ])
 
 	def set_disabled(self, disabled):
-		assert isinstance(disabled, type(False))
+		assert isinstance(disabled, bool)
 		self._disabled = disabled
 
 	def set_mode(self, mode):

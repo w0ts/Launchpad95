@@ -1,6 +1,5 @@
 """After disconnect() the script leaves no listener on Live's objects (they outlive it)."""
 import pytest
-
 from harness.rig import make_song
 
 SESSION, USER1, USER2, MIXER = 4, 5, 6, 7
