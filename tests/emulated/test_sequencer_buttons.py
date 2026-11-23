@@ -295,3 +295,99 @@ def test_deleting_the_locked_clip_unlocks(three_clip_rig):
     rig.tick()
     assert not stepseq(rig)._is_locked
     assert stepseq(rig)._clip is None
+
+
+# -- melodic editor grid
+def melodic_editor(rig):
+    return rig.selector._stepseq2._note_editor
+
+
+def grid_column(rig, x):
+    return [melodic_editor(rig)._grid_buffer[x][y] for y in range(7)]
+
+
+def show_page(rig, side):
+    rig.tap_side(side)
+    rig.wait(0.6)
+
+
+def test_melodic_pitch_grid_and_mono(melodic_rig):
+    rig = melodic_rig
+    rig.tap(0, 6)
+    rig.tap(0, 2)  # poly: a second note on the same step
+    assert grid_column(rig, 0) == ["StepSequencer2.Pitch.Off"] * 2 + ["StepSequencer2.Pitch.On"] + [
+        "StepSequencer2.Pitch.Off"
+    ] * 3 + ["StepSequencer2.Pitch.On"]
+    rig.tap_side(PITCHES)
+    rig.tap_side(PITCHES)  # mono
+    rig.tap(1, 6)
+    rig.tap(1, 3)  # mono: replaces the step's note
+    assert grid_column(rig, 1).count("StepSequencer2.Pitch.On") == 1
+
+
+def test_melodic_held_pitch_button_fills_the_loop(melodic_rig):
+    rig = melodic_rig
+    rig.press_side(PITCHES)
+    rig.tap(3, 4)
+    rig.release_side(PITCHES)
+    ed = melodic_editor(rig)
+    loop_steps = int(rig.song.tracks[0].clip_slots[0].clip.loop_end / ed._quantization)
+    assert all(ed._notes_pitches[x * 7 + 6 - 4] == 1 for x in range(loop_steps))
+
+
+@pytest.mark.parametrize(
+    "side, values, skin, bar",
+    [
+        (OCTAVES, "_notes_octaves", "StepSequencer2.Octave", False),
+        (VELOCITIES, "_notes_velocities", "StepSequencer2.Velocity", True),
+        (LENGTHS, "_notes_lengths", "StepSequencer2.Length", True),
+    ],
+    ids=["octaves", "velocities", "lengths"],
+)
+def test_melodic_value_pages(melodic_rig, side, values, skin, bar):
+    rig = melodic_rig
+    rig.tap(0, 6)  # a note on step 0, none on step 1
+    show_page(rig, side)
+    ed = melodic_editor(rig)
+    rig.tap(0, 2)  # step 0: value 4
+    rig.tap(1, 5)  # step 1: value 1
+    assert getattr(ed, values)[0] == 4
+    assert getattr(ed, values)[1] == 1
+    on = [y for y in range(7) if grid_column(rig, 0)[y] == skin + ".On"]
+    assert on == ([2, 3, 4, 5, 6] if bar else [2])
+    dim = [y for y in range(7) if grid_column(rig, 1)[y] == skin + ".Dim"]  # no note on step 1
+    assert dim == ([5, 6] if bar else [5])
+    # held: the left half sets every step of the loop, the right half steps them up/down
+    loop_steps = int(rig.song.tracks[0].clip_slots[0].clip.loop_end / ed._quantization)
+    rig.press_side(side)
+    rig.tap(2, 3)
+    assert all(getattr(ed, values)[x] == 3 for x in range(loop_steps))
+    rig.tap(6, 1)  # up
+    assert all(getattr(ed, values)[x] == 4 for x in range(loop_steps))
+    rig.tap(6, 5)  # down
+    rig.tap(6, 5)
+    assert all(getattr(ed, values)[x] == 2 for x in range(loop_steps))
+    rig.release_side(side)
+
+
+def test_melodic_playhead_and_playing_notes(melodic_rig):
+    rig = melodic_rig
+    ed = melodic_editor(rig)
+    rig.tap(2, 4)
+    ed.set_playhead(2 * ed.quantization)
+    assert ed._grid_buffer[2][6] == "StepSequencer2.NoteEditor.MetronomeInPage"
+    assert ed._grid_buffer[2][4] == "StepSequencer2.NoteEditor.PlayInPage"
+    ed.set_playhead(10 * ed.quantization)  # second page: shown in the other-page colour
+    assert ed._grid_buffer[2][6] == "StepSequencer2.NoteEditor.MetronomeInOtherPage"
+    ed.set_playhead(None)
+    assert ed._grid_buffer[2][6] != "StepSequencer2.NoteEditor.MetronomeInOtherPage"
+
+
+def test_melodic_pad_without_clip_creates_one(make_rig, model):
+    rig = make_rig(model)
+    rig.tap_top(USER2)
+    rig.tap_top(USER2)
+    rig.tick(2)
+    rig.song.view.highlighted_clip_slot = rig.song.tracks[0].clip_slots[0]
+    rig.tap(0, 0)
+    assert rig.song.tracks[0].clip_slots[0].has_clip
