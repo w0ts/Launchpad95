@@ -358,26 +358,6 @@ class NoteSelectorComponent(ControlSurfaceComponent):
     def set_key(self, key):
         self._key = key
 
-    def note_is_available(self, key): # deprecated???
-        if self.is_drumrack:
-            if self._drum_group_device.drum_pads[key].chains:
-                return True
-            else:
-                return False
-        else:
-            for note in self._scale:
-                if key % 12 == (self.root_note + note) % 12:
-                    return True
-                else:
-                    return False
-
-    def note_is_used(self, key):# deprecated???
-        if self._clip != None:
-            for note in self._clip_notes:
-                if note[0] == key:  # key: 0-127 MIDI note #
-                    return True
-        return False
-
     @property
     def selected_note(self):
         return self._root_note + self._offset

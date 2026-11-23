@@ -52,10 +52,6 @@ class Launchpad(ControlSurface):
 	
 	def __init__(self, c_instance):
 		ControlSurface.__init__(self, c_instance)
-		live = Live.Application.get_application()
-		self._live_major_version = live.get_major_version()
-		self._live_minor_version = live.get_minor_version()
-		self._live_bugfix_version = live.get_bugfix_version()
 		self._selector = None #needed because update hardware is called.
 		self._lpx = False
 		self._mk2_rgb = False
@@ -300,10 +296,6 @@ class Launchpad(ControlSurface):
 					new_channel = self._selector.channel_for_current_mode()
 					for note in self._drum_notes:
 						self._translate_message(MIDI_NOTE_TYPE, note, 0, note, new_channel)
-			elif self._selector._main_mode_index==2:
-				mode = Settings.USER_MODES_2[self._selector._sub_mode_list[self._selector._main_mode_index] ] 
-				#self._selector.mode_index == 1:
-				#if self._selector._sub_mode_list[self._selector._mode_index] > 0:  # disable midi map rebuild for instrument mode to prevent light feedback errors
 
 
 	def _send_midi(self, midi_bytes, optimized=None):

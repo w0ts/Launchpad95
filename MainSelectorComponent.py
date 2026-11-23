@@ -68,8 +68,6 @@ class MainSelectorComponent(ModeSelectorComponent):
 		self._mode_index = 0 #Inherited from parent
 		self._main_mode_index = 0 #LP original modes
 		self._sub_mode_list = [0, 0, 0, 0]
-		for index in range(4):
-			self._sub_mode_list[index] = 0
 		self.set_mode_buttons(self._mode_buttons)
 		self._last_mode_index = 0 
 			
@@ -89,11 +87,6 @@ class MainSelectorComponent(ModeSelectorComponent):
 		self._zooming.name = 'Session_Overview'
 		self._zooming.set_empty_value("DefaultButton.Disabled")
 		
-		#Non-Matrix buttons
-		self._all_buttons = []
-		for button in self._side_buttons + self._nav_buttons:
-			self._all_buttons.append(button)
-
 		#SubSelector changes the Mode using side buttons -> MIXER MODE (ie. Pan, Volume, Send1, Send2, Stop, Solo, Activate, Arm)
 		self._sub_modes = SubSelectorComponent(matrix, side_buttons, self._session, self._control_surface)
 		self._sub_modes.name = 'Mixer_Modes'

@@ -39,7 +39,6 @@ class StepSequencerComponent(CompoundComponent):
         self._clip_slot = None
         self._note_cache = []
         self._playhead = 0
-        self._new_clip_pages = 4
         # mode
         self._mode = -1
         self._mode_backup = self._mode

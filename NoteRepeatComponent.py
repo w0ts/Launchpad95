@@ -43,9 +43,6 @@ class NoteRepeatComponent(CompoundComponent):
     def update(self):
         super(NoteRepeatComponent, self).update()
 
-    def set_select_buttons(self, buttons):
-        self._options.select_buttons.set_control_element(buttons)
-
     def set_note_repeat(self, note_repeat):
         if not note_repeat:
             note_repeat = DummyNoteRepeat()

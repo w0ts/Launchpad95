@@ -309,13 +309,7 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
 			self._shown_notes = shown
 			self._grid_steps = grid
 			write_all_notes(self._clip, note_cache)
-			#self._control_surface.schedule_message(1, self._sch_update, ([self._clip,tuple(note_cache)]))
 
-	def _sch_update(self, data):
-			clip = data[0]
-			note_cache = data[1]
-			write_all_notes(clip, note_cache or ())
-				
 	def update(self, force=False):
 		if force:
 			self._force_update = True
@@ -768,7 +762,6 @@ class StepSequencerComponent2(StepSequencerComponent):
 
 	def __init__(self, matrix, side_buttons, top_buttons, control_surface):
 		super(StepSequencerComponent2, self).__init__(matrix, side_buttons, top_buttons, control_surface)
-		self._new_clip_pages = 1
 		self._name = "melodic step sequencer"
 		
 		

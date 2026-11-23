@@ -142,13 +142,6 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._playhead = playhead
 		self._update_matrix()
 
-	def update_notes(self): # Deprecated ???
-		if self._clip != None:
-			note_cache = read_all_notes(self._clip)
-			if self._clip_notes != note_cache:
-				self._clip_notes = note_cache
-		self._update_matrix()
-
 	def update(self, force=False):
 		if self.is_enabled():
 			if force:
