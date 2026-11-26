@@ -1,4 +1,4 @@
-from _Framework.ButtonElement import OFF_VALUE, ON_VALUE, ButtonElement
+from _Framework.ButtonElement import OFF_VALUE, ON_VALUE, ButtonElement, Color
 from _Framework.Skin import SkinColorMissingError
 
 
@@ -107,7 +107,9 @@ class ConfigurableButtonElement(ButtonElement):
             self._draw_skin(self._off_value)
 
     def _draw_skin(self, value):
-        self._skin[value].draw(self)
+        """Draw a skin entry by name, or a Color object as it is (e.g. a pad in its clip colour)."""
+        color = value if isinstance(value, Color) else self._skin[value]
+        color.draw(self)
 
     def script_wants_forwarding(self):
         return not self.suppress_script_forwarding

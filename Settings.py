@@ -7,6 +7,11 @@ class Settings:
     # SESSION__LINK = True
     SESSION__LINK = False
 
+    # RGB Launchpads (MK2, Mini MK3, X): a triggered clip blinks and a playing clip pulses in its own
+    # clip colour instead of green (recording stays red). No effect on the MK1 models.
+    # SESSION__CLIP_COLOR_WHEN_PLAYING = True
+    SESSION__CLIP_COLOR_WHEN_PLAYING = False
+
     # Link stepseq to follow session. Experimental
     # STEPSEQ__LINK_WITH_SESSION = True
     STEPSEQ__LINK_WITH_SESSION = False

@@ -5,7 +5,9 @@ import Live
 from _Framework.ClipSlotComponent import ClipSlotComponent
 from _Framework.SubjectSlot import subject_slot
 
+from .ColorsMK2 import Blink, Pulse
 from .ProSessionSettings import record_quantization_name
+from .Settings import Settings
 
 _Q = Live.Song.Quantization
 
@@ -195,6 +197,19 @@ class SpecialClipSlotComponent(ClipSlotComponent):
             track = self._clip_slot.canonical_parent
             if track.is_foldable:
                 return "ProSession.ClipUnFoldedTrack" if track.fold_state == 0 else "ProSession.ClipFoldedTrack"
+        return self._in_clip_colour(value)
+
+    def _in_clip_colour(self, value):
+        """With Settings.SESSION__CLIP_COLOR_WHEN_PLAYING on an RGB Launchpad (the session set a clip
+        colour table), a triggered clip blinks and a playing one pulses in its own colour."""
+        if not Settings.SESSION__CLIP_COLOR_WHEN_PLAYING or self._clip_rgb_table is None:
+            return value
+        if self._clip_slot is None or not self.has_clip():
+            return value
+        if value == self._started_value:
+            return Pulse(self._color_value(self._clip_slot.clip.color))
+        if value == self._triggered_to_play_value:
+            return Blink(self._color_value(self._clip_slot.clip.color))
         return value
 
     def _print(self, msg):
