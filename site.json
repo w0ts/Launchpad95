@@ -1,0 +1,6 @@
+{
+  "site": {"name": "Launchpad95", "prefix": "Launchpad95", "repo": "https://github.com/w0ts/Launchpad95"},
+  "build": [
+    {"copy": "site/", "why": "the manual and install pages, as pages.yml publishes them"}
+  ]
+}
