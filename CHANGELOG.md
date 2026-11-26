@@ -5,6 +5,15 @@ Versions are headed `## [x.y.z] - YYYY-MM-DD`; a release's notes are its section
 README). Releases before 2026 had no version numbers and are listed by date. The manual is on
 [w0ts.github.io/Launchpad95](https://w0ts.github.io/Launchpad95/).
 
+## [2.1.0] - 2026-11-26
+
+### Added
+
+- **Playing clips in their own colour** (RGB Launchpads: MK2, Mini MK3, X), an option: with
+  `SESSION__CLIP_COLOR_WHEN_PLAYING = True` in `Settings.py`, a triggered clip blinks and a playing clip pulses in its
+  clip colour instead of green, in Session and Pro Session mode. Off by default
+  ([#98](https://github.com/w0ts/Launchpad95/issues/98)).
+
 ## [2.0.0] - 2026-11-23
 
 The project moves to [w0ts](https://w0ts.github.io/): repository [w0ts/Launchpad95](https://github.com/w0ts/Launchpad95),
